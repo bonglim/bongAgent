@@ -1,0 +1,499 @@
+/* Global design tokens for the KB premium dark workspace tone. */
+:root {
+  --bg: #111111;
+  --surface: #191919;
+  --surface-2: #202020;
+  --surface-3: #292929;
+  --line: #34302a;
+  --text: #f5f0e6;
+  --muted: #a8a095;
+  --gold: #f4c542;
+  --gold-deep: #bb8d17;
+  --danger: #e35d5d;
+  --success: #5cbf7a;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.34);
+}
+
+/* Normalize sizing and keep typography stable across viewports. */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 1180px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, "Pretendard", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Main shell keeps the fixed header and full dashboard canvas aligned. */
+.app-shell {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #151515 0%, #101010 100%);
+}
+
+/* Top header gives date and employee context without stealing dashboard space. */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(17, 17, 17, 0.94);
+  backdrop-filter: blur(16px);
+}
+
+.brand {
+  color: var(--gold);
+  font-size: 20px;
+  margin-right: 18px;
+}
+
+.page-title,
+.header-meta {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Main layout reserves a persistent right rail for chat commands. */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(780px, 1fr) 380px;
+  gap: 22px;
+  padding: 24px 28px;
+}
+
+.dashboard-layout.chat-hidden {
+  grid-template-columns: minmax(780px, 1fr);
+}
+
+.work-area,
+.chat-panel,
+.kanban-column,
+.priority-panel,
+.modal {
+  border: 1px solid var(--line);
+  background: rgba(25, 25, 25, 0.96);
+  box-shadow: var(--shadow);
+}
+
+.work-area {
+  padding: 22px;
+}
+
+.section-heading,
+.column-title,
+.panel-title,
+.chat-header,
+.modal-title,
+.card-topline,
+.source-title-row,
+.modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-heading {
+  margin-bottom: 18px;
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+.section-heading h1 {
+  font-size: 24px;
+}
+
+.section-heading p,
+.todo-card p,
+.source-item p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Kanban grid provides three stable tracks for drag-and-drop. */
+.kanban-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.kanban-column {
+  min-height: 430px;
+  padding: 16px;
+  background: var(--surface);
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.kanban-column.is-over {
+  border-color: var(--gold);
+  background: #211f19;
+}
+
+.column-title {
+  margin-bottom: 14px;
+}
+
+.column-title h2,
+.panel-title h2,
+.chat-header h2 {
+  font-size: 15px;
+}
+
+.column-title span {
+  min-width: 28px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  color: var(--gold);
+  background: #151515;
+}
+
+.card-list {
+  display: grid;
+  gap: 12px;
+}
+
+/* ToDo cards keep source and priority visible for fast scanning. */
+.todo-card {
+  min-height: 142px;
+  padding: 14px;
+  border: 1px solid #3a352c;
+  background: var(--surface-2);
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.todo-card:hover {
+  border-color: var(--gold-deep);
+}
+
+.todo-card.dragging {
+  opacity: 0.74;
+}
+
+.todo-card h3 {
+  margin: 12px 0 8px;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.todo-card footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.card-topline {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.priority-dot,
+.priority-pill {
+  border: 1px solid var(--line);
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+.priority-dot.high,
+.priority-pill.high {
+  color: var(--gold);
+  border-color: var(--gold-deep);
+}
+
+.priority-dot.medium,
+.priority-pill.medium {
+  color: #d5c8a2;
+}
+
+.priority-dot.low,
+.priority-pill.low {
+  color: #8f9b8f;
+}
+
+/* Priority source panels sit below the Kanban board for linked work creation. */
+.priority-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.priority-panel {
+  padding: 16px;
+}
+
+.panel-title {
+  justify-content: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--gold);
+}
+
+.source-list {
+  display: grid;
+  gap: 10px;
+}
+
+.source-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.source-title-row {
+  gap: 12px;
+  justify-content: flex-start;
+}
+
+.source-meta {
+  display: block;
+  margin: 6px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Chat panel stays reachable for natural-language commands. */
+.chat-panel {
+  position: sticky;
+  top: 92px;
+  height: calc(100vh - 116px);
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  padding: 18px;
+}
+
+.chat-header span {
+  color: var(--gold);
+  font-size: 12px;
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 16px 0;
+}
+
+.chat-bubble {
+  max-width: 88%;
+  padding: 12px;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.chat-bubble.assistant {
+  align-self: flex-start;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+
+.chat-bubble.user {
+  align-self: flex-end;
+  color: #1a1508;
+  background: var(--gold);
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.suggestions button {
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: transparent;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.chat-form {
+  display: grid;
+  grid-template-columns: 1fr 44px;
+  gap: 8px;
+}
+
+/* Inputs use the same dense form style in chat and modal surfaces. */
+input,
+textarea,
+select {
+  width: 100%;
+  border: 1px solid var(--line);
+  color: var(--text);
+  background: #121212;
+  padding: 11px 12px;
+  outline: none;
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--gold-deep);
+}
+
+.icon-button,
+.send-button,
+.primary-button,
+.ghost-button,
+.danger-button,
+.text-button {
+  border: 1px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.icon-button,
+.send-button {
+  width: 40px;
+  padding: 0;
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.primary-button {
+  color: #161104;
+  background: var(--gold);
+  border-color: var(--gold);
+  font-weight: 700;
+}
+
+.ghost-button,
+.text-button {
+  color: var(--text);
+  background: transparent;
+}
+
+.ghost-button.linked,
+.ghost-button:disabled {
+  color: var(--success);
+  cursor: default;
+}
+
+.danger-button {
+  color: #fff;
+  border-color: rgba(227, 93, 93, 0.45);
+  background: rgba(227, 93, 93, 0.18);
+}
+
+.empty-state {
+  min-height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  text-align: center;
+  padding: 16px;
+  font-size: 13px;
+}
+
+.toast {
+  position: fixed;
+  left: 28px;
+  bottom: 28px;
+  z-index: 30;
+  max-width: 520px;
+  border: 1px solid var(--line);
+  color: var(--text);
+  background: #1d1b17;
+  box-shadow: var(--shadow);
+  padding: 12px 16px;
+}
+
+/* Modal overlay supports ToDo detail editing without navigating away. */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.62);
+}
+
+.modal {
+  width: 520px;
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+}
+
+.modal label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.modal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.modal-actions {
+  margin-top: 4px;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

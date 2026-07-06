@@ -1,0 +1,67 @@
+[
+  {
+    "id": "todo_seed_001",
+    "title": "김민수 고객 만기 안내 전화",
+    "description": "예금 만기 전 상품 안내 및 상담 예약 확인",
+    "status": "todo",
+    "priority": "high",
+    "due_date": "오늘 오후 3시",
+    "source": "customer",
+    "linked_type": "customer",
+    "linked_id": "customer_001",
+    "created_at": "2026-07-06T09:00:00",
+    "updated_at": "2026-07-06T09:00:00"
+  },
+  {
+    "id": "todo_seed_002",
+    "title": "오전 WM 회의 자료 확인",
+    "description": "지점장 공유용 핵심 고객 관리 현황 점검",
+    "status": "doing",
+    "priority": "medium",
+    "due_date": "오늘 오전",
+    "source": "manual",
+    "linked_type": null,
+    "linked_id": null,
+    "created_at": "2026-07-06T09:10:00",
+    "updated_at": "2026-07-06T09:20:00"
+  },
+  {
+    "id": "todo_seed_003",
+    "title": "내부 공지 확인 완료",
+    "description": "영업점 운영 기준 변경 공지 확인",
+    "status": "done",
+    "priority": "low",
+    "due_date": "오늘",
+    "source": "message",
+    "linked_type": "message",
+    "linked_id": "message_003",
+    "created_at": "2026-07-06T08:40:00",
+    "updated_at": "2026-07-06T10:00:00"
+  },
+  {
+    "title": "이봉림 고객 12시 전화 할일",
+    "description": "자연어 명령에서 생성됨: 이봉림 고객 12시 전화 할일 추가",
+    "status": "todo",
+    "priority": "medium",
+    "due_date": "12시",
+    "source": "assistant",
+    "linked_type": null,
+    "linked_id": null,
+    "id": "todo_04638422",
+    "created_at": "2026-07-06T16:39:23.274320",
+    "updated_at": "2026-07-06T16:39:23.274320"
+  },
+  {
+    "title": "이영희 고객 상담 예약",
+    "description": "펀드 리밸런싱 상담 필요 - 최근 시장 변동성 확대에 따른 포트폴리오 점검",
+    "status": "doing",
+    "priority": "high",
+    "due_date": "2026-07-06",
+    "source": "customer",
+    "linked_type": "customer",
+    "linked_id": "customer_002",
+    "id": "todo_41c659ab",
+    "created_at": "2026-07-06T16:39:25.804778",
+    "updated_at": "2026-07-06T16:39:30.817087"
+  }
+]

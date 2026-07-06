@@ -1,0 +1,32 @@
+[
+  {
+    "id": "customer_001",
+    "name": "김민수",
+    "reason": "정기예금 만기 임박",
+    "recommended_action": "만기 안내 전화",
+    "scheduled_date": "2026-07-06",
+    "priority": "high",
+    "detail": "만기 후 재예치 또는 대체 상품 상담 필요",
+    "linked_todo_id": "todo_seed_001"
+  },
+  {
+    "id": "customer_002",
+    "name": "이영희",
+    "reason": "펀드 리밸런싱 상담 필요",
+    "recommended_action": "상담 예약",
+    "scheduled_date": "2026-07-06",
+    "priority": "high",
+    "detail": "최근 시장 변동성 확대에 따른 포트폴리오 점검",
+    "linked_todo_id": "todo_41c659ab"
+  },
+  {
+    "id": "customer_003",
+    "name": "박준호",
+    "reason": "대출 사후관리 확인",
+    "recommended_action": "서류 확인",
+    "scheduled_date": "2026-07-07",
+    "priority": "medium",
+    "detail": "소득 증빙 서류 추가 수취 필요",
+    "linked_todo_id": null
+  }
+]
