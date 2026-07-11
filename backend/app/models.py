@@ -1,4 +1,8 @@
-"""Pydantic models shared by Bong에이전트 API endpoints."""
+"""Bong에이전트 API endpoint들이 공유하는 Pydantic 모델.
+
+요청 body, 응답 body, JSON 저장소에 기록되는 업무 데이터의 schema를 한곳에
+정의한다. FastAPI는 이 모델들을 사용해 입력값을 검증하고 OpenAPI 문서를 만든다.
+"""
 
 from datetime import datetime
 from typing import Literal
@@ -10,11 +14,13 @@ TodoStatus = Literal["todo", "doing", "done"]
 Priority = Literal["high", "medium", "low"]
 TodoSource = Literal["manual", "message", "customer", "assistant"]
 MessageStatus = Literal["unread", "todo_linked", "done"]
+LLMModel = str
 
 
 class TodoBase(BaseModel):
-    """Common editable fields for a ToDo item."""
+    """ToDo 항목에서 생성과 수정 화면이 공유하는 기본 필드."""
 
+    # title은 카드의 핵심 식별 텍스트이므로 빈 문자열을 허용하지 않는다.
     title: str = Field(..., min_length=1)
     description: str = ""
     status: TodoStatus = "todo"
@@ -26,11 +32,11 @@ class TodoBase(BaseModel):
 
 
 class TodoCreate(TodoBase):
-    """Payload used when a user or agent creates a ToDo."""
+    """사용자나 agent가 ToDo를 생성할 때 전달하는 payload."""
 
 
 class TodoUpdate(BaseModel):
-    """Partial update payload for a ToDo."""
+    """ToDo 일부 필드만 수정할 때 사용하는 부분 update payload."""
 
     title: str | None = None
     description: str | None = None
@@ -40,7 +46,7 @@ class TodoUpdate(BaseModel):
 
 
 class Todo(TodoBase):
-    """Persisted ToDo item returned to the frontend."""
+    """저장소에 기록되고 프론트엔드로 반환되는 ToDo 항목."""
 
     id: str
     created_at: datetime
@@ -48,7 +54,7 @@ class Todo(TodoBase):
 
 
 class InternalMessage(BaseModel):
-    """Mock internal message that can be converted into a ToDo."""
+    """ToDo로 전환할 수 있는 mock 사내쪽지 레코드."""
 
     id: str
     title: str
@@ -60,8 +66,24 @@ class InternalMessage(BaseModel):
     linked_todo_id: str | None = None
 
 
+class InternalMessageCreate(BaseModel):
+    """사용자가 화면에서 사내쪽지를 직접 등록할 때 전달하는 payload."""
+
+    title: str = Field(..., min_length=1)
+    sender: str = Field(..., min_length=1)
+    received_at: str = ""
+    priority: Priority = "medium"
+    body: str = ""
+
+
+class InternalMessageUpdate(BaseModel):
+    """사내쪽지 일부 필드만 수정할 때 사용하는 부분 update payload."""
+
+    priority: Priority | None = None
+
+
 class AftercareCustomer(BaseModel):
-    """Mock aftercare customer record that can be converted into a ToDo."""
+    """ToDo로 전환할 수 있는 mock 사후관리 고객 레코드."""
 
     id: str
     name: str
@@ -73,14 +95,32 @@ class AftercareCustomer(BaseModel):
     linked_todo_id: str | None = None
 
 
+class AftercareCustomerCreate(BaseModel):
+    """사용자가 화면에서 사후관리 고객을 직접 등록할 때 전달하는 payload."""
+
+    name: str = Field(..., min_length=1)
+    reason: str = Field(..., min_length=1)
+    recommended_action: str = ""
+    scheduled_date: str = ""
+    priority: Priority = "medium"
+    detail: str = ""
+
+
+class AftercareCustomerUpdate(BaseModel):
+    """사후관리 고객 일부 필드만 수정할 때 사용하는 부분 update payload."""
+
+    priority: Priority | None = None
+
+
 class AssistantCommandRequest(BaseModel):
-    """Natural-language command sent from the chat panel."""
+    """채팅 패널에서 전송되는 자연어 명령 요청."""
 
     message: str = Field(..., min_length=1)
+    model: LLMModel | None = None
 
 
 class AssistantCommandResponse(BaseModel):
-    """Structured response returned after command classification and handling."""
+    """명령 분류와 처리 후 반환되는 구조화된 assistant 응답."""
 
     intent: str
     reply: str

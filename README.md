@@ -9,7 +9,8 @@ backend/
   app/
     agent.py          # 규칙 기반 자연어 명령 처리
     config.py         # .env 기반 환경 설정
-    llm_provider.py   # 향후 GPT-5/LangChain/LangGraph 확장용 Provider
+    llm_settings.py   # .env 기반 LLM 모델 목록/기본값/key env 매핑
+    llm_provider.py   # 향후 Gemini/OpenAI/LangChain/LangGraph 확장용 Provider
     main.py           # FastAPI 라우터와 API 엔드포인트
     models.py         # API 요청/응답 데이터 모델
     repository.py     # 로컬 JSON 저장소 접근 계층
@@ -21,6 +22,7 @@ frontend/
   src/
     api.js            # 백엔드 API 클라이언트
     App.jsx           # 메인 React 애플리케이션
+    llmSettings.js    # LLM 콤보박스 설정 정규화/변경 핸들러
     styles.css        # KB 프리미엄 업무 시스템 톤의 UI 스타일
 ```
 
@@ -35,14 +37,33 @@ cp .env.example .env
 주요 설정:
 
 ```env
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.5-flash
 OPENAI_API_KEY=
-OPENAI_MODEL=gpt-5.2
-LLM_PROVIDER=gpt
+LLM_PROVIDER=auto
+LLM_MODELS=gemini-2.5-flash|gemini-2.5-flash|gemini|GEMINI_API_KEY;gemini-3.5-flash|gemini-3.5-flash|gemini|GEMINI_API_KEY;gpt5.5|gpt5.5|openai|OPENAI_API_KEY;gpt-4o-mini|GPT4o-mini|openai|GPT4O_MINI_API_KEY
+DEFAULT_LLM_MODEL=gemini-3.5-flash
 BACKEND_CORS_ORIGINS=http://localhost:5173
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-`LLM_PROVIDER=gpt`와 `OPENAI_API_KEY`가 설정되어 있으면 채팅 fallback은 OpenAI Responses API를 실제 호출합니다. API 키가 없거나 `LLM_PROVIDER=mock`이면 mock 응답으로 동작합니다.
+채팅창 우측상단의 LLM 콤보박스는 백엔드의 `GET /api/llm/models` 응답으로 구성됩니다. 모델 목록은 소스코드가 아니라 `.env`의 `LLM_MODELS`로 관리합니다.
+
+`LLM_MODELS` 형식:
+
+```text
+model_id|화면표시명|provider|API_KEY_ENV_NAME;...
+```
+
+예를 들어 새 OpenAI 계열 모델을 추가하려면 `.env`만 다음처럼 바꾸면 됩니다.
+
+```env
+LLM_MODELS=gemini-3.5-flash|gemini-3.5-flash|gemini|GEMINI_API_KEY;new-model|새 모델|openai|NEW_MODEL_API_KEY
+DEFAULT_LLM_MODEL=new-model
+NEW_MODEL_API_KEY=
+```
+
+`provider`는 현재 `gemini`, `google`, `openai`를 지원합니다. `API_KEY_ENV_NAME`에는 해당 모델이 사용할 API 키 환경변수명을 넣습니다. `LLM_PROVIDER=auto`와 각 API 키가 설정되어 있으면 선택된 모델에 맞춰 Gemini 또는 OpenAI API를 호출합니다. API 키가 없거나 `LLM_PROVIDER=mock`이면 mock 응답으로 동작합니다.
 
 ## 백엔드 실행 방법
 
@@ -81,7 +102,7 @@ npm run dev
 - 사내쪽지 mock list: 우선순위 정렬 및 ToDo 전환
 - 사후관리 고객 mock list: 우선순위 정렬 및 ToDo 전환
 - 자연어 명령: ToDo 추가/상태 수정/삭제 규칙 기반 처리
-- GPT 채팅 fallback: ToDo 명령이 아니면 mock LLM provider 응답
+- LLM 채팅 fallback: ToDo 명령이 아니면 선택한 Gemini/OpenAI 모델 또는 mock LLM provider 응답
 
 ## 자연어 명령 예시
 
@@ -101,6 +122,7 @@ PATCH  /api/todos/{todo_id}
 DELETE /api/todos/{todo_id}
 GET    /api/messages
 GET    /api/customers/aftercare
+GET    /api/llm/models
 POST   /api/todos/from-message/{message_id}
 POST   /api/todos/from-customer/{customer_id}
 POST   /api/assistant/command
@@ -110,4 +132,4 @@ POST   /api/assistant/command
 
 - 데이터는 `backend/data/*.json`에 저장됩니다.
 - MVP에서는 인증/권한, 실제 사내 시스템 연동, 실제 고객 개인정보 연동을 제외했습니다.
-- 확장 시 `JsonRepository`를 DB repository로 교체하고, `LLMProvider`를 OpenAI/LangChain/LangGraph 기반 구현으로 교체하는 구조를 권장합니다.
+- 확장 시 `JsonRepository`를 DB repository로 교체하고, `LLMProvider`를 Gemini/OpenAI/LangChain/LangGraph 기반 구현으로 교체하는 구조를 권장합니다.

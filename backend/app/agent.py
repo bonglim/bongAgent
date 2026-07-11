@@ -1,25 +1,32 @@
-"""Rule-based assistant agent for MVP natural-language ToDo commands."""
+"""MVP 자연어 ToDo 명령을 처리하는 규칙 기반 assistant agent.
+
+이 agent는 한국어 사용자의 간단한 업무 명령을 생성, 수정, 삭제, 일반 채팅으로
+분류한다. 명확한 ToDo 명령은 저장소에 즉시 반영하고, 그 외 문장 작성이나 일반
+질문은 설정된 LLM provider로 넘긴다.
+"""
 
 from __future__ import annotations
 
 import re
 
 from .llm_provider import LLMProvider
-from .models import AssistantCommandResponse, TodoCreate, TodoUpdate
+from .models import AssistantCommandResponse, LLMModel, TodoCreate, TodoUpdate
 from .repository import JsonRepository
 
 
 class RuleBasedAssistantAgent:
-    """Classify Korean natural-language input and execute simple ToDo actions."""
+    """한국어 자연어 입력을 분류하고 단순 ToDo 작업을 실행한다."""
 
     def __init__(self, repository: JsonRepository, llm_provider: LLMProvider):
-        """Receive storage and LLM dependencies from the API layer."""
+        """API 계층에서 저장소와 LLM provider 의존성을 주입받는다."""
+        # 저장소와 LLM provider를 주입받아 agent 동작을 외부 의존성에서 분리한다.
 
         self.repository = repository
         self.llm_provider = llm_provider
 
-    def handle(self, message: str) -> AssistantCommandResponse:
-        """Route a user message to create, update, delete, or chat handling."""
+    def handle(self, message: str, model: LLMModel | None = None) -> AssistantCommandResponse:
+        """사용자 메시지를 생성, 수정, 삭제, 일반 채팅 처리로 라우팅한다."""
+        # 자연어 메시지를 삭제, 수정, 생성, 일반 채팅 순서로 분류한다.
 
         normalized = message.strip()
         if self._is_delete(normalized):
@@ -28,25 +35,29 @@ class RuleBasedAssistantAgent:
             return self._update_todo(normalized)
         if self._is_create(normalized):
             return self._create_todo(normalized)
-        return self._chat(normalized)
+        return self._chat(normalized, model)
 
     def _is_create(self, message: str) -> bool:
-        """Detect ToDo creation requests by common Korean command keywords."""
+        """자주 쓰는 한국어 명령 키워드로 ToDo 생성 요청을 감지한다."""
+        # 한국어 생성 명령 키워드가 포함됐는지 확인한다.
 
         return any(keyword in message for keyword in ["추가", "등록", "할일", "todo", "ToDo"])
 
     def _is_update(self, message: str) -> bool:
-        """Detect ToDo status update requests."""
+        """한국어 상태 변경 표현으로 ToDo 수정 요청을 감지한다."""
+        # 한국어 상태 변경 명령 키워드가 포함됐는지 확인한다.
 
         return any(keyword in message for keyword in ["진행중", "진행 중", "완료", "할일로", "변경", "바꿔"])
 
     def _is_delete(self, message: str) -> bool:
-        """Detect ToDo deletion requests."""
+        """한국어 삭제 표현으로 ToDo 삭제 요청을 감지한다."""
+        # 한국어 삭제 명령 키워드가 포함됐는지 확인한다.
 
         return any(keyword in message for keyword in ["삭제", "지워", "제거"])
 
     def _create_todo(self, message: str) -> AssistantCommandResponse:
-        """Extract a ToDo draft from text and create it immediately for the MVP."""
+        """자연어 문장에서 ToDo 초안을 추출하고 MVP에서는 즉시 생성한다."""
+        # 자연어 문장에서 제목, 마감일, 우선순위를 추출해 ToDo를 생성한다.
 
         title = self._extract_title(message)
         due_date = self._extract_due_text(message)
@@ -68,7 +79,8 @@ class RuleBasedAssistantAgent:
         )
 
     def _update_todo(self, message: str) -> AssistantCommandResponse:
-        """Find the closest ToDo and update its status from natural language."""
+        """가장 가까운 ToDo를 찾아 자연어에서 추출한 상태로 변경한다."""
+        # 메시지와 가장 가까운 ToDo를 찾아 상태를 변경한다.
 
         target = self._find_matching_todo(message)
         if not target:
@@ -83,7 +95,8 @@ class RuleBasedAssistantAgent:
         )
 
     def _delete_todo(self, message: str) -> AssistantCommandResponse:
-        """Find the closest ToDo and delete it from the dashboard."""
+        """가장 가까운 ToDo를 찾아 대시보드에서 삭제한다."""
+        # 메시지와 가장 가까운 ToDo를 찾아 삭제한다.
 
         target = self._find_matching_todo(message)
         if not target:
@@ -96,20 +109,23 @@ class RuleBasedAssistantAgent:
             todos=self.repository.list_todos(),
         )
 
-    def _chat(self, message: str) -> AssistantCommandResponse:
-        """Send non-ToDo requests to the configured LLM provider."""
+    def _chat(self, message: str, model: LLMModel | None) -> AssistantCommandResponse:
+        """ToDo 명령이 아닌 요청을 설정된 LLM provider로 전달한다."""
+        # ToDo 명령이 아닌 일반 요청을 LLM provider로 전달한다.
 
-        return AssistantCommandResponse(intent="chat", reply=self.llm_provider.chat(message))
+        return AssistantCommandResponse(intent="chat", reply=self.llm_provider.chat(message, model))
 
     def _extract_title(self, message: str) -> str:
-        """Clean common command words to derive a concise ToDo title."""
+        """흔한 명령어 표현을 제거해 간결한 ToDo 제목을 만든다."""
+        # 명령어 표현을 제거해 카드 제목으로 쓸 짧은 문장을 만든다.
 
         title = re.sub(r"(추가해줘|추가|등록해줘|등록|할일로|ToDo로|todo로)", "", message, flags=re.IGNORECASE)
         title = re.sub(r"^(오늘|내일)\s*", "", title).strip()
         return title[:40] or "새 업무"
 
     def _extract_due_text(self, message: str) -> str:
-        """Extract simple Korean date/time phrases for display."""
+        """표시에 사용할 간단한 한국어 날짜/시간 표현을 추출한다."""
+        # 간단한 한국어 날짜와 시간 표현을 마감일 텍스트로 뽑아낸다.
 
         match = re.search(r"(오늘|내일)?\s*(오전|오후)?\s*\d{1,2}시", message)
         if match:
@@ -121,7 +137,8 @@ class RuleBasedAssistantAgent:
         return ""
 
     def _extract_status(self, message: str) -> str:
-        """Map Korean status words to the API status enum."""
+        """한국어 상태 단어를 API status enum 값으로 매핑한다."""
+        # 한국어 상태 표현을 API enum 값으로 변환한다.
 
         if "완료" in message:
             return "done"
@@ -130,7 +147,8 @@ class RuleBasedAssistantAgent:
         return "todo"
 
     def _find_matching_todo(self, message: str):
-        """Choose the first ToDo whose title shares a token with the message."""
+        """메시지와 토큰을 공유하는 첫 번째 ToDo를 선택한다."""
+        # 명령어 토큰을 제외한 단어로 기존 ToDo 중 가장 가까운 항목을 찾는다.
 
         command_words = {"삭제", "지워", "제거", "진행중", "진행", "완료", "변경", "바꿔", "업무를", "업무"}
         tokens = [token for token in re.split(r"\s+", message) if token and token not in command_words]

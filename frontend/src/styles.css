@@ -1,4 +1,4 @@
-/* Global design tokens for the KB premium dark workspace tone. */
+/* KB 프리미엄 다크 업무 화면 톤을 구성하는 전역 디자인 토큰. */
 :root {
   --bg: #111111;
   --surface: #191919;
@@ -10,11 +10,13 @@
   --gold: #f4c542;
   --gold-deep: #bb8d17;
   --danger: #e35d5d;
+  --priority-high: #b91c1c;
   --success: #5cbf7a;
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.34);
+  --radius: 8px;
 }
 
-/* Normalize sizing and keep typography stable across viewports. */
+/* 모든 요소의 sizing 계산을 통일하고 viewport 변화에도 타이포그래피를 안정적으로 유지한다. */
 * {
   box-sizing: border-box;
 }
@@ -22,6 +24,7 @@
 body {
   margin: 0;
   min-width: 1180px;
+  overflow: hidden;
   background: var(--bg);
   color: var(--text);
   font-family: Inter, "Pretendard", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -38,13 +41,18 @@ button {
   cursor: pointer;
 }
 
-/* Main shell keeps the fixed header and full dashboard canvas aligned. */
+button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+/* 앱 전체 shell은 고정 헤더와 대시보드 canvas의 기준 레이아웃을 잡는다. */
 .app-shell {
   min-height: 100vh;
   background: linear-gradient(180deg, #151515 0%, #101010 100%);
 }
 
-/* Top header gives date and employee context without stealing dashboard space. */
+/* 상단 헤더는 대시보드 공간을 많이 쓰지 않으면서 날짜와 사용자 맥락을 보여준다. */
 .topbar {
   position: sticky;
   top: 0;
@@ -60,15 +68,67 @@ button {
 }
 
 .brand {
-  color: var(--gold);
-  font-size: 20px;
-  margin-right: 18px;
+  color: #ffffff;
+  font-size: 24px;
 }
 
-.page-title,
+.brand-group {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.kb-logo {
+  width: 50px;
+  height: 34px;
+  flex: 0 0 auto;
+  display: block;
+  object-fit: contain;
+}
+
 .header-meta {
   color: var(--muted);
   font-size: 14px;
+}
+
+.header-greeting {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+}
+
+.header-greeting div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.header-greeting strong,
+.header-greeting-subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-greeting strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffffff;
+  font-size: 15px;
+}
+
+.greeting-applause {
+  flex: 0 0 auto;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.header-greeting-subtitle {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .header-meta {
@@ -77,34 +137,369 @@ button {
   gap: 16px;
 }
 
-/* Main layout reserves a persistent right rail for chat commands. */
+.user-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+}
+
+.profile-avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: block;
+  border: 1px solid rgba(244, 197, 66, 0.72);
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+/* 메인 레이아웃은 자연어 명령용 오른쪽 채팅 rail을 고정 폭으로 확보한다. */
 .dashboard-layout {
+  height: calc(100vh - 68px);
   display: grid;
-  grid-template-columns: minmax(780px, 1fr) 380px;
+  grid-template-columns: 220px minmax(780px, 1fr) 380px;
   gap: 22px;
   padding: 24px 28px;
+  overflow: hidden;
 }
 
 .dashboard-layout.chat-hidden {
-  grid-template-columns: minmax(780px, 1fr);
+  grid-template-columns: 220px minmax(780px, 1fr);
 }
 
+.dashboard-layout.menu-collapsed {
+  grid-template-columns: 72px minmax(780px, 1fr) 380px;
+}
+
+.dashboard-layout.chat-hidden.menu-collapsed {
+  grid-template-columns: 72px minmax(780px, 1fr);
+}
+
+.dashboard-menu,
 .work-area,
 .chat-panel,
 .kanban-column,
 .priority-panel,
 .modal {
   border: 1px solid var(--line);
+  border-radius: var(--radius);
   background: rgba(25, 25, 25, 0.96);
   box-shadow: var(--shadow);
 }
 
+.dashboard-menu {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px;
+  overflow: hidden;
+}
+
+.dashboard-menu.collapsed {
+  padding: 14px 9px;
+}
+
+.menu-toggle {
+  width: 100%;
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  color: var(--gold);
+  background: #151515;
+  padding: 10px;
+  border-radius: var(--radius);
+}
+
+.menu-toggle:hover,
+.menu-toggle:focus {
+  border-color: rgba(244, 197, 66, 0.48);
+  background: #1d1b17;
+  outline: none;
+}
+
+.dashboard-menu.collapsed .menu-toggle {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding: 10px 0;
+}
+
+.menu-profile-avatar {
+  width: 34px;
+  height: 34px;
+  display: block;
+  border: 1px solid rgba(244, 197, 66, 0.72);
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+.menu-profile-text {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  color: var(--text);
+  text-align: left;
+}
+
+.menu-profile-text strong,
+.menu-profile-text span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-profile-text strong {
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.menu-profile-text span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dashboard-menu.collapsed .menu-profile-text,
+.dashboard-menu.collapsed .menu-toggle svg {
+  display: none;
+}
+
+.menu-list {
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.menu-item {
+  width: 100%;
+  min-width: 0;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  padding: 13px 11px;
+  border: 1px solid transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  background: transparent;
+  border-radius: var(--radius);
+}
+
+.dashboard-menu.collapsed .menu-item {
+  justify-content: center;
+  padding: 13px 0;
+}
+
+.menu-calendar-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.menu-calendar-item {
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.menu-calendar-main {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  padding: 0;
+}
+
+.menu-calendar-count {
+  min-width: 32px;
+  height: 24px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid rgba(185, 28, 28, 0.62);
+  border-radius: 999px;
+  color: #ffffff;
+  background: rgba(185, 28, 28, 0.28);
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.menu-calendar-count span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--priority-high);
+}
+
+.dashboard-menu.collapsed .menu-calendar-item {
+  justify-content: center;
+}
+
+.dashboard-menu.collapsed .menu-calendar-main .menu-item-label {
+  gap: 0;
+}
+
+.dashboard-menu.collapsed .menu-calendar-count {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 10px;
+}
+
+.dashboard-menu.collapsed .menu-calendar-count span {
+  display: none;
+}
+
+.menu-calendar-tooltip {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  border: 1px solid rgba(185, 28, 28, 0.4);
+  border-radius: var(--radius);
+  background: #151515;
+  padding: 10px;
+}
+
+.menu-calendar-tooltip-item {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.menu-calendar-tooltip-item strong {
+  color: var(--gold);
+  font-size: 11px;
+}
+
+.menu-calendar-tooltip-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.menu-calendar-more {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.dashboard-menu.collapsed .menu-calendar-tooltip {
+  display: none;
+}
+
+.menu-item:hover,
+.menu-item:focus {
+  border-color: rgba(244, 197, 66, 0.42);
+  background: #1d1b17;
+  outline: none;
+}
+
+.menu-calendar-main:focus,
+.menu-calendar-count:focus {
+  outline: none;
+}
+
+.menu-calendar-item:focus-within,
+.menu-calendar-item:hover {
+  border-color: rgba(244, 197, 66, 0.42);
+  background: #1d1b17;
+}
+
+.menu-item.muted {
+  color: var(--muted);
+}
+
+.menu-item-label {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.menu-item-label svg {
+  flex: 0 0 auto;
+  color: var(--gold);
+}
+
+.menu-item-label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.dashboard-menu.collapsed .menu-item-label {
+  gap: 0;
+}
+
+.dashboard-menu.collapsed .menu-item-label span {
+  width: 0;
+  opacity: 0;
+}
+
 .work-area {
-  padding: 22px;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 0.9fr) minmax(170px, 25vh) 42px;
+  gap: 16px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0 22px;
+}
+
+.work-tip-bar {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 52px auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  padding-top: 10px;
+}
+
+.work-tip-logo {
+  width: 40px;
+  height: 26px;
+  flex: 0 0 auto;
+  display: block;
+  object-fit: contain;
+}
+
+.work-tip-bar strong {
+  justify-self: center;
+  color: var(--gold);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.work-tip-bar span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
 }
 
 .section-heading,
-.column-title,
+.column-summary-title,
 .panel-title,
 .chat-header,
 .modal-title,
@@ -117,13 +512,20 @@ button {
 }
 
 .section-heading {
-  margin-bottom: 18px;
+  margin-bottom: 0;
 }
 
 .section-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.section-title-row {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
 }
 
 h1,
@@ -137,7 +539,7 @@ p {
   font-size: 24px;
 }
 
-.section-heading p,
+.section-helper,
 .todo-card p,
 .source-item p {
   color: var(--muted);
@@ -145,15 +547,24 @@ p {
   line-height: 1.5;
 }
 
-/* Kanban grid provides three stable tracks for drag-and-drop. */
+.section-helper {
+  white-space: nowrap;
+}
+
+/* Kanban grid는 드래그 앤 드롭이 흔들리지 않도록 세 개의 안정적인 column track을 제공한다. */
 .kanban-grid {
+  min-height: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
+  overflow: hidden;
 }
 
 .kanban-column {
-  min-height: 430px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: 16px;
   background: var(--surface);
   transition: border-color 0.18s ease, background-color 0.18s ease;
@@ -164,39 +575,85 @@ p {
   background: #211f19;
 }
 
-.column-title {
+.column-summary {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px;
   margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #151515;
 }
 
-.column-title h2,
+.column-summary-icon {
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(244, 197, 66, 0.34);
+  border-radius: var(--radius);
+  color: var(--gold);
+  background: #1d1b17;
+}
+
+.column-summary-body {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: 10px;
+}
+
+.column-summary-title {
+  color: #ffffff;
+}
+
+.column-summary-title h2 {
+  font-size: 16px;
+}
+
+.column-summary-count {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+}
+
+.column-summary-count strong {
+  color: #ffffff;
+  font-size: 36px;
+  line-height: 0.9;
+}
+
+.column-summary-count span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .panel-title h2,
 .chat-header h2 {
   font-size: 15px;
 }
 
-.column-title span {
-  min-width: 28px;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--line);
-  color: var(--gold);
-  background: #151515;
-}
-
 .card-list {
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
+  align-content: start;
   gap: 12px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
-/* ToDo cards keep source and priority visible for fast scanning. */
+/* ToDo 카드는 빠른 스캔을 위해 원천과 우선순위를 항상 위쪽에 노출한다. */
 .todo-card {
   min-height: 142px;
   padding: 14px;
   border: 1px solid #3a352c;
+  border-radius: var(--radius);
   background: var(--surface-2);
   transition: transform 0.18s ease, border-color 0.18s ease;
+  overflow: hidden;
 }
 
 .todo-card:hover {
@@ -208,9 +665,31 @@ p {
 }
 
 .todo-card h3 {
-  margin: 12px 0 8px;
+  margin: 0;
   font-size: 16px;
   line-height: 1.35;
+}
+
+.todo-title-row {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 8px;
+}
+
+.todo-title-row h3 {
+  overflow-wrap: anywhere;
+}
+
+.todo-description {
+  display: -webkit-box;
+  max-height: 58px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .todo-card footer {
@@ -226,51 +705,102 @@ p {
   font-size: 12px;
 }
 
+.card-meta {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-delete-button {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: transparent;
+}
+
+.card-delete-button:hover,
+.card-delete-button:focus {
+  border-color: rgba(227, 93, 93, 0.45);
+  color: #fff;
+  background: rgba(227, 93, 93, 0.16);
+}
+
 .priority-dot,
 .priority-pill {
   border: 1px solid var(--line);
+  border-radius: var(--radius);
   padding: 3px 8px;
   font-size: 12px;
 }
 
 .priority-dot.high,
 .priority-pill.high {
-  color: var(--gold);
-  border-color: var(--gold-deep);
+  color: var(--priority-high);
+  border-color: rgba(185, 28, 28, 0.68);
 }
 
 .priority-dot.medium,
 .priority-pill.medium {
-  color: #d5c8a2;
+  color: var(--gold);
+  border-color: var(--gold-deep);
 }
 
 .priority-dot.low,
 .priority-pill.low {
-  color: #8f9b8f;
+  color: #8d8981;
 }
 
-/* Priority source panels sit below the Kanban board for linked work creation. */
+/* 우선순위 원천 패널은 Kanban 아래에서 사내쪽지/고객 데이터를 ToDo로 전환하게 한다. */
 .priority-grid {
+  min-height: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
-  margin-top: 16px;
+  margin-top: 0;
 }
 
 .priority-panel {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   padding: 16px;
 }
 
 .panel-title {
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 8px;
   margin-bottom: 12px;
   color: var(--gold);
 }
 
+.panel-title-main {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.source-register-button {
+  min-height: 30px;
+  flex: 0 0 auto;
+  padding: 0 9px;
+  font-size: 12px;
+}
+
 .source-list {
+  min-height: 0;
   display: grid;
+  align-content: start;
   gap: 10px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .source-item {
@@ -280,12 +810,73 @@ p {
   align-items: center;
   padding: 12px;
   border: 1px solid var(--line);
+  border-radius: var(--radius);
   background: var(--surface-2);
 }
 
 .source-title-row {
   gap: 12px;
   justify-content: flex-start;
+}
+
+.source-title-row strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-delete-button {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: transparent;
+  padding: 0;
+}
+
+.source-delete-button:hover,
+.source-delete-button:focus {
+  border-color: rgba(227, 93, 93, 0.45);
+  color: #fff;
+  background: rgba(227, 93, 93, 0.16);
+}
+
+.priority-star {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  color: #6f6a61;
+  background: transparent;
+  padding: 0;
+  border-radius: var(--radius);
+}
+
+.priority-star:hover,
+.priority-star:focus {
+  border-color: var(--line);
+  background: #151515;
+}
+
+.priority-star.medium {
+  color: var(--gold);
+}
+
+.priority-star.high {
+  color: var(--priority-high);
+}
+
+.priority-star.low {
+  color: #6f6a61;
 }
 
 .source-meta {
@@ -295,7 +886,7 @@ p {
   font-size: 12px;
 }
 
-/* Chat panel stays reachable for natural-language commands. */
+/* 채팅 패널은 자연어 명령과 일반 LLM 요청을 언제든 보낼 수 있도록 오른쪽에 유지된다. */
 .chat-panel {
   position: sticky;
   top: 92px;
@@ -310,6 +901,18 @@ p {
   font-size: 12px;
 }
 
+.model-picker {
+  flex: 0 0 176px;
+}
+
+.model-picker select {
+  height: 36px;
+  padding: 0 10px;
+  color: var(--gold);
+  font-size: 12px;
+  background: var(--surface-2);
+}
+
 .chat-messages {
   display: flex;
   flex-direction: column;
@@ -321,6 +924,7 @@ p {
 .chat-bubble {
   max-width: 88%;
   padding: 12px;
+  border-radius: var(--radius);
   line-height: 1.5;
   font-size: 14px;
 }
@@ -346,6 +950,7 @@ p {
 
 .suggestions button {
   border: 1px solid var(--line);
+  border-radius: var(--radius);
   color: var(--muted);
   background: transparent;
   padding: 8px 10px;
@@ -358,12 +963,13 @@ p {
   gap: 8px;
 }
 
-/* Inputs use the same dense form style in chat and modal surfaces. */
+/* 입력 요소는 채팅과 모달 모두에서 밀도 있는 동일한 폼 스타일을 사용한다. */
 input,
 textarea,
 select {
   width: 100%;
   border: 1px solid var(--line);
+  border-radius: var(--radius);
   color: var(--text);
   background: #121212;
   padding: 11px 12px;
@@ -388,6 +994,7 @@ select:focus {
 .danger-button,
 .text-button {
   border: 1px solid var(--line);
+  border-radius: var(--radius);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -409,6 +1016,12 @@ select:focus {
   background: var(--gold);
   border-color: var(--gold);
   font-weight: 700;
+}
+
+.compact-todo-button {
+  gap: 4px;
+  min-width: 66px;
+  padding: 0 8px;
 }
 
 .ghost-button,
@@ -435,26 +1048,14 @@ select:focus {
   align-items: center;
   justify-content: center;
   border: 1px dashed var(--line);
+  border-radius: var(--radius);
   color: var(--muted);
   text-align: center;
   padding: 16px;
   font-size: 13px;
 }
 
-.toast {
-  position: fixed;
-  left: 28px;
-  bottom: 28px;
-  z-index: 30;
-  max-width: 520px;
-  border: 1px solid var(--line);
-  color: var(--text);
-  background: #1d1b17;
-  box-shadow: var(--shadow);
-  padding: 12px 16px;
-}
-
-/* Modal overlay supports ToDo detail editing without navigating away. */
+/* 모달 overlay는 화면 이동 없이 ToDo 상세 편집과 히스토리 이동을 처리한다. */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -469,6 +1070,283 @@ select:focus {
   display: grid;
   gap: 14px;
   padding: 22px;
+}
+
+.history-modal {
+  width: 640px;
+  max-height: 76vh;
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.history-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-list {
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.history-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: 12px;
+}
+
+.history-item div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.history-item strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-item span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.calendar-modal {
+  width: 620px;
+}
+
+.calendar-modal .modal-title div {
+  display: grid;
+  gap: 4px;
+}
+
+.calendar-modal .modal-title span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.calendar-weekdays span {
+  color: var(--muted);
+  text-align: center;
+  font-size: 12px;
+}
+
+.calendar-day {
+  position: relative;
+  min-height: 62px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: 9px;
+}
+
+.calendar-day.empty {
+  border-color: transparent;
+  background: transparent;
+}
+
+.calendar-day.today {
+  border-color: var(--gold-deep);
+}
+
+.calendar-day:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.calendar-date {
+  color: #ffffff;
+  font-size: 13px;
+}
+
+.calendar-count {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  min-width: 30px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid rgba(185, 28, 28, 0.62);
+  border-radius: 999px;
+  color: #ffffff;
+  background: rgba(185, 28, 28, 0.28);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.calendar-count span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--priority-high);
+}
+
+.calendar-day-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 3;
+  width: 220px;
+  display: none;
+  transform: translateX(-50%);
+  border: 1px solid rgba(185, 28, 28, 0.4);
+  border-radius: var(--radius);
+  background: #151515;
+  box-shadow: var(--shadow);
+  padding: 10px;
+}
+
+.calendar-day:hover .calendar-day-tooltip,
+.calendar-day:focus .calendar-day-tooltip,
+.calendar-day:focus-within .calendar-day-tooltip {
+  display: grid;
+  gap: 8px;
+}
+
+.calendar-day-tooltip-item {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.calendar-day-tooltip-item strong,
+.calendar-day-tooltip-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-day-tooltip-item strong {
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.calendar-day-tooltip-item span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.calendar-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.calendar-summary strong {
+  color: var(--gold);
+  font-size: 24px;
+}
+
+.calendar-summary span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.message-detail-modal,
+.customer-detail-modal {
+  width: 720px;
+  max-height: 78vh;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.message-detail-modal .modal-title-copy,
+.customer-detail-modal .modal-title-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.message-detail-modal .modal-title span,
+.customer-detail-modal .modal-title span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.modal-title-actions,
+.detail-item-actions {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.message-detail-list,
+.customer-detail-list {
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.message-detail-item,
+.customer-detail-item {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: 14px;
+}
+
+.message-detail-item-head,
+.message-detail-item footer,
+.customer-detail-item-head,
+.customer-detail-item footer {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.message-detail-item-head strong,
+.customer-detail-item-head strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.message-detail-meta,
+.message-detail-item footer,
+.customer-detail-meta,
+.customer-detail-item footer {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.message-detail-item p,
+.customer-detail-item p {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .modal label {

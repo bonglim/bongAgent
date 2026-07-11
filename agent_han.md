@@ -9,7 +9,7 @@
 - 백엔드: FastAPI, `http://localhost:8000`
 - 프론트엔드: Vite React, `http://localhost:5173`
 - 저장소: `backend/data` 아래 로컬 JSON 파일
-- 채팅 fallback: `LLM_PROVIDER=gpt`와 `OPENAI_API_KEY`가 설정된 경우 OpenAI Responses API 실제 호출
+- 채팅 fallback: `LLM_PROVIDER=gemini`와 `GEMINI_API_KEY`가 설정된 경우 Gemini API 실제 호출
 
 ## 제품 범위
 
@@ -22,7 +22,7 @@
 - 모달에서 ToDo를 생성, 수정, 삭제한다
 - 우선순위 정렬된 사내쪽지를 보여주고 각 쪽지를 연결된 ToDo로 전환한다
 - 우선순위 정렬된 사후관리 고객을 보여주고 각 고객을 연결된 ToDo로 전환한다
-- 우측 채팅 패널에서 자연어로 ToDo 생성, 상태 변경, 삭제, 일반 GPT 채팅을 수행한다
+- 우측 채팅 패널에서 자연어로 ToDo 생성, 상태 변경, 삭제, 일반 Gemini 채팅을 수행한다
 - 우측 채팅창에 숨김/보기 아이콘 버튼을 제공한다
 - 채팅창을 숨기면 Kanban 업무 영역이 전체 대시보드 폭을 사용해야 한다
 
@@ -78,7 +78,7 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 pydantic-settings==2.7.1
 python-dotenv==1.0.1
-openai>=2.0.0
+certifi==2026.6.17
 ```
 
 ### 환경 설정
@@ -91,8 +91,8 @@ openai>=2.0.0
 
 - `backend_cors_origins: str = "http://localhost:5173"`
 - `llm_provider: str = "mock"`
-- `openai_api_key: str = ""`
-- `openai_model: str = "gpt-5.2"`
+- `gemini_api_key: str = ""`
+- `gemini_model: str = "gemini-3.5-flash"`
 - `data_dir: Path = backend/data`
 
 프로젝트 루트의 `.env` 파일을 읽어야 한다.
@@ -105,9 +105,9 @@ openai>=2.0.0
 
 ```env
 BACKEND_CORS_ORIGINS=http://localhost:5173
-LLM_PROVIDER=gpt
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-5.2
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.5-flash
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
@@ -255,49 +255,44 @@ ToDo 매칭:
 Provider 종류:
 
 - `MockLLMProvider`
-- `OpenAIReadyProvider`
+- `GeminiProvider`
 
 `MockLLMProvider`:
 
 - API 키가 없거나 `LLM_PROVIDER=mock`일 때 사용한다
-- 한국어 mock GPT 응답을 반환한다
+- 한국어 mock Gemini 응답을 반환한다
 
-`OpenAIReadyProvider`:
+`GeminiProvider`:
 
-- OpenAI Python SDK의 Responses API를 호출한다
-- `from openai import OpenAI, OpenAIError`를 사용한다
-- SDK가 설치되어 있지 않으면 requirements 설치 안내 메시지를 한국어로 반환한다
+- Gemini generateContent REST API를 호출한다
 
 Provider 선택:
 
 ```python
 provider = settings.llm_provider.lower()
-if provider in {"gpt", "openai"} and settings.openai_api_key:
-    return OpenAIReadyProvider(settings.openai_api_key, settings.openai_model)
+if provider in {"gemini", "google"} and settings.gemini_api_key:
+    return GeminiProvider(settings.gemini_api_key, settings.gemini_model)
 return MockLLMProvider()
 ```
 
-OpenAI 호출:
+Gemini 호출 방식:
+
+- Python 표준 라이브러리 `urllib.request`로 Gemini `generateContent` REST API를 호출한다
+- 요청 URL은 `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}` 형식을 사용한다
+- 한국어 개인 업무 비서 역할의 `systemInstruction`을 포함한다
+- `candidates[].content.parts[]`에서 첫 번째 비어 있지 않은 `text`를 응답으로 반환한다
+- API 키 오류, 권한 오류, 할당량 오류, 네트워크 오류는 한국어 안내 문구로 반환한다
+
+요청 payload 예시:
 
 ```python
-client.responses.create(
-    model=self.model,
-    instructions=(
-        "당신은 한국어로 답하는 개인 업무 비서입니다. "
-        "은행 업무 맥락의 문구 작성, 일정 정리, 고객 응대 초안을 간결하고 정중하게 도와주세요. "
-        "제공되지 않은 고객 개인정보나 내부 정보는 추측하지 마세요."
-    ),
-    input=message,
-)
+payload = {
+    "systemInstruction": {
+        "parts": [{"text": "당신은 한국어로 답하는 개인 업무 비서입니다."}]
+    },
+    "contents": [{"parts": [{"text": message}]}],
+}
 ```
-
-응답은 `response.output_text.strip()`을 반환한다.
-
-오류 처리:
-
-- `insufficient_quota` 또는 HTTP 429: 결제/할당량 확인 안내
-- HTTP 401: API 키 확인 안내
-- 그 외: OpenAI 호출 오류 메시지 반환
 
 ### FastAPI 라우트
 
@@ -463,7 +458,7 @@ React 19, Vite, `lucide-react`, `@dnd-kit`을 사용한다.
 
 채팅 패널:
 
-- 제목: `GPT 채팅 / 자연어 명령`
+- 제목: `Gemini 채팅 / 자연어 명령`
 - 상태 문구: `규칙 기반 MVP`
 - 초기 assistant 메시지: `오늘 처리할 업무를 자연어로 입력해 주세요.`
 - 추천 버튼:
@@ -620,7 +615,7 @@ cd frontend && npm run build
 - 사후관리 고객을 ToDo로 전환할 수 있다
 - 연결된 고객은 버튼이 비활성화된다
 - 채팅 생성 명령이 ToDo를 만든다
-- 일반 채팅은 `.env`에 따라 mock 또는 OpenAI provider를 사용한다
+- 일반 채팅은 `.env`에 따라 mock 또는 Gemini provider를 사용한다
 - 채팅 숨김/보기 버튼이 우측 패널을 토글한다
 - 채팅 숨김 상태에서 Kanban 영역이 넓어진다
 

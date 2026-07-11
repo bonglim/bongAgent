@@ -9,7 +9,7 @@ The finished app must run locally with:
 - Backend: FastAPI on `http://localhost:8000`
 - Frontend: Vite React on `http://localhost:5173`
 - Local JSON persistence under `backend/data`
-- Optional OpenAI Responses API chat fallback when `LLM_PROVIDER=gpt` and `OPENAI_API_KEY` are configured
+- Optional Gemini API chat fallback when `LLM_PROVIDER=gemini` and `GEMINI_API_KEY` are configured
 
 ## Product Scope
 
@@ -22,7 +22,7 @@ Core workflows:
 - Create, edit, and delete ToDos through a modal
 - View priority-sorted internal messages and convert each message into a linked ToDo
 - View priority-sorted aftercare customers and convert each customer into a linked ToDo
-- Use a right-side chat panel for natural-language ToDo creation, status changes, deletion, and general GPT chat
+- Use a right-side chat panel for natural-language ToDo creation, status changes, deletion, and general Gemini chat
 - Provide a chat hide/show icon button. When hidden, the Kanban workspace expands to the full dashboard width
 
 Out of scope for MVP:
@@ -76,7 +76,7 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 pydantic-settings==2.7.1
 python-dotenv==1.0.1
-openai>=2.0.0
+certifi==2026.6.17
 ```
 
 ### Configuration
@@ -87,8 +87,8 @@ Required settings:
 
 - `backend_cors_origins: str = "http://localhost:5173"`
 - `llm_provider: str = "mock"`
-- `openai_api_key: str = ""`
-- `openai_model: str = "gpt-5.2"`
+- `gemini_api_key: str = ""`
+- `gemini_model: str = "gemini-3.5-flash"`
 - `data_dir: Path = backend/data`
 
 Load environment from the project-root `.env`. Provide `get_settings()` with `functools.lru_cache`.
@@ -97,9 +97,9 @@ Load environment from the project-root `.env`. Provide `get_settings()` with `fu
 
 ```env
 BACKEND_CORS_ORIGINS=http://localhost:5173
-LLM_PROVIDER=gpt
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-5.2
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.5-flash
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
@@ -180,38 +180,35 @@ Create `backend/app/llm_provider.py`.
 Provider types:
 
 - `MockLLMProvider`: deterministic Korean mock response
-- `OpenAIReadyProvider`: calls OpenAI Responses API
+- `GeminiProvider`: calls Gemini API
 
 Provider selection:
 
 ```python
 provider = settings.llm_provider.lower()
-if provider in {"gpt", "openai"} and settings.openai_api_key:
-    return OpenAIReadyProvider(settings.openai_api_key, settings.openai_model)
+if provider in {"gemini", "google"} and settings.gemini_api_key:
+    return GeminiProvider(settings.gemini_api_key, settings.gemini_model)
 return MockLLMProvider()
 ```
 
-OpenAI behavior:
+Gemini behavior:
 
-- Import `OpenAI` and `OpenAIError` from `openai`
-- If the SDK is missing, return a Korean message asking the user to install requirements
-- Call:
+- Use Python standard library `urllib.request` to call the Gemini `generateContent` REST API
+- Send requests to `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}`
+- Include a Korean `systemInstruction` for a concise personal workplace assistant
+- Extract the first non-empty text from `candidates[].content.parts[]`
+- Return Korean error messages for invalid keys, permission issues, quota issues, and network failures
+
+Request payload shape:
 
 ```python
-client.responses.create(
-    model=self.model,
-    instructions=(
-        "당신은 한국어로 답하는 개인 업무 비서입니다. "
-        "은행 업무 맥락의 문구 작성, 일정 정리, 고객 응대 초안을 간결하고 정중하게 도와주세요. "
-        "제공되지 않은 고객 개인정보나 내부 정보는 추측하지 마세요."
-    ),
-    input=message,
-)
+payload = {
+    "systemInstruction": {
+        "parts": [{"text": "당신은 한국어로 답하는 개인 업무 비서입니다."}]
+    },
+    "contents": [{"parts": [{"text": message}]}],
+}
 ```
-
-- Return `response.output_text.strip()`
-- For `insufficient_quota` or HTTP 429, return a friendly Korean billing/quota message
-- For HTTP 401, return a friendly Korean API-key message
 
 ### FastAPI Routes
 
@@ -417,7 +414,7 @@ Browser checks:
 - Message-to-ToDo conversion works and disables linked message action
 - Customer-to-ToDo conversion works and disables linked customer action
 - Chat create command creates a ToDo
-- Non-ToDo chat uses mock or OpenAI provider depending on `.env`
+- Non-ToDo chat uses mock or Gemini provider depending on `.env`
 - Chat hide/show button toggles the right panel and expands/collapses the layout
 
 ## Implementation Principles
