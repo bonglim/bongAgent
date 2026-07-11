@@ -10,8 +10,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { DndContext, PointerSensor, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { BarChart3, CalendarDays, Check, CheckCircle2, ClipboardList, History, LayoutDashboard, Loader2, MessageSquareText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus, Redo2, RefreshCw, Send, Settings, Star, Timer, Trash2, Undo2, UserRound } from "lucide-react";
+import { BarChart3, CalendarDays, Check, CheckCircle2, ClipboardList, Copy, History, LayoutDashboard, Loader2, MessageSquareText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus, Redo2, RefreshCw, Send, Settings, Star, Timer, Trash2, Undo2, UserRound } from "lucide-react";
 import {
+  API_BASE_URL,
   createCustomer,
   createMessage,
   createTodo,
@@ -20,11 +21,13 @@ import {
   deleteCustomer,
   deleteTodo,
   deleteMessage,
+  fetchAgentApis,
   fetchCustomers,
   fetchHistory,
   fetchLlmModels,
   fetchMessages,
   fetchTodos,
+  invokeAgent,
   redoHistory,
   restoreHistory,
   sendAssistantCommand,
@@ -36,6 +39,36 @@ import {
 import kbLogo from "./assets/kb-logo-mark.png";
 import profileAvatar from "./assets/profile-avatar.png";
 import { createLlmModelChangeHandler, DEFAULT_LLM_MODEL, FALLBACK_LLM_MODELS, normalizeLlmModels } from "./llmSettings.js";
+
+/**
+ * @typedef {object} TodoItem
+ * @property {string} id
+ * @property {string} title
+ * @property {string} description
+ * @property {"todo" | "doing" | "done"} status
+ * @property {"high" | "medium" | "low"} priority
+ * @property {string} due_date
+ * @property {string | null} [linked_type]
+ * @property {string | null} [linked_id]
+ */
+
+/**
+ * @typedef {object} SourceRecord
+ * @property {string} id
+ * @property {"high" | "medium" | "low"} priority
+ * @property {string | null} [linked_todo_id]
+ */
+
+/**
+ * @typedef {object} AgentApiSpec
+ * @property {string} id
+ * @property {string} name
+ * @property {string} method
+ * @property {string} endpoint
+ * @property {string} description
+ * @property {string} sample_message
+ * @property {Array<{ method: string, endpoint: string, description: string }>} related_apis
+ */
 
 const STATUS_COLUMNS = [
   { id: "todo", label: "할일", summaryTitle: "오늘의 업무", Icon: ClipboardList },
@@ -73,8 +106,8 @@ function formatToday() {
 /**
  * ToDo 목록을 Kanban column id별로 묶는다.
  *
- * @param {Array<object>} todos - 백엔드에서 받은 ToDo 목록.
- * @returns {Record<string, Array<object>>} status id를 key로 갖는 ToDo group.
+ * @param {Array<TodoItem>} todos - 백엔드에서 받은 ToDo 목록.
+ * @returns {Record<string, Array<TodoItem>>} status id를 key로 갖는 ToDo group.
  */
 function groupTodos(todos) {
   return STATUS_COLUMNS.reduce((groups, column) => {
@@ -174,6 +207,12 @@ export default function App() {
   ]);
   const [historyState, setHistoryState] = useState(EMPTY_HISTORY);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isAgentApiOpen, setIsAgentApiOpen] = useState(false);
+  const [agentApiItems, setAgentApiItems] = useState([]);
+  const [selectedAgentId, setSelectedAgentId] = useState("orchestrator");
+  const [agentApiInput, setAgentApiInput] = useState("쪽지 우선순위 설정해줘");
+  const [agentApiResult, setAgentApiResult] = useState(null);
+  const [agentApiLoading, setAgentApiLoading] = useState(false);
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
@@ -221,6 +260,43 @@ export default function App() {
   /** 헤더 새로고침 버튼에서 대시보드 데이터와 모델 설정을 함께 다시 읽는다. */
   async function handleHeaderRefresh() {
     await Promise.all([refreshDashboard(), loadLlmModels()]);
+  }
+
+  /** 설정 메뉴에서 agent API 정보 팝업을 열고 목록을 준비한다. */
+  async function openAgentApiModal() {
+    setIsAgentApiOpen(true);
+    setAgentApiResult(null);
+    try {
+      const response = await fetchAgentApis();
+      const items = response.agents || [];
+      setAgentApiItems(items);
+      if (items.length && !items.some((item) => item.id === selectedAgentId)) {
+        setSelectedAgentId(items[0].id);
+        setAgentApiInput(items[0].sample_message || "");
+      }
+    } catch (error) {
+      setNotice(error.message);
+    }
+  }
+
+  /** 선택한 agent API를 직접 호출하고 결과를 표시한다. */
+  async function runAgentApi() {
+    if (!selectedAgentId || !agentApiInput.trim()) return;
+    setAgentApiLoading(true);
+    try {
+      const response = await invokeAgent(selectedAgentId, { message: agentApiInput.trim(), model: selectedModel });
+      setAgentApiResult(response);
+      if (["create_message", "delete_message", "set_message_priorities", "create_customer", "delete_customer", "create_todo", "update_todo", "delete_todo"].includes(response.intent)) {
+        await refreshDashboard();
+      }
+      await refreshHistoryState();
+      setNotice(response.reply);
+    } catch (error) {
+      setAgentApiResult({ intent: "error", reply: error.message });
+      setNotice(error.message);
+    } finally {
+      setAgentApiLoading(false);
+    }
   }
 
   /** 로컬 mutation 후 보드는 이미 갱신된 상태에서 히스토리 스택만 다시 읽는다. */
@@ -527,6 +603,9 @@ export default function App() {
       const response = await sendAssistantCommand(message, selectedModel);
       setChatMessages((current) => [...current, { role: "assistant", text: response.reply }]);
       if (response.todos) setTodos(response.todos);
+      if (["create_message", "delete_message", "set_message_priorities", "create_customer", "delete_customer"].includes(response.intent)) {
+        await refreshDashboard();
+      }
       await refreshHistoryState();
       setNotice(response.reply);
     } catch (error) {
@@ -557,7 +636,7 @@ export default function App() {
           <button className="icon-button" type="button" onClick={handleHeaderRefresh} title="새로고침" aria-label="새로고침" disabled={loading}>
             {loading ? <Loader2 className="spin" size={18} /> : <RefreshCw size={18} />}
           </button>
-          <button className="icon-button" title="설정">
+          <button className="icon-button" type="button" onClick={openAgentApiModal} title="설정" aria-label="설정">
             <Settings size={18} />
           </button>
         </div>
@@ -570,6 +649,7 @@ export default function App() {
           onCalendarOpen={() => setIsCalendarOpen(true)}
           onMessageDetailOpen={() => setIsMessageDetailOpen(true)}
           onCustomerDetailOpen={() => setIsCustomerDetailOpen(true)}
+          onSettingsOpen={openAgentApiModal}
           todos={todos}
           messages={messages}
           customers={customers}
@@ -696,6 +776,19 @@ export default function App() {
           canRedo={canRedo}
         />
       )}
+      {isAgentApiOpen && (
+        <AgentApiModal
+          agents={agentApiItems}
+          selectedAgentId={selectedAgentId}
+          setSelectedAgentId={setSelectedAgentId}
+          input={agentApiInput}
+          setInput={setAgentApiInput}
+          result={agentApiResult}
+          loading={agentApiLoading}
+          onRun={runAgentApi}
+          onClose={() => setIsAgentApiOpen(false)}
+        />
+      )}
       {isCalendarOpen && (
         <CalendarModal
           todos={todos}
@@ -748,8 +841,21 @@ export default function App() {
   );
 }
 
-/** 좌측 메뉴는 앱의 주요 업무 화면으로 이동하는 내비게이션을 제공한다. */
-function DashboardMenu({ collapsed, onToggle, onCalendarOpen, onMessageDetailOpen, onCustomerDetailOpen, todos, messages = [], customers = [] }) {
+/**
+ * 좌측 메뉴는 앱의 주요 업무 화면으로 이동하는 내비게이션을 제공한다.
+ *
+ * @param {object} props
+ * @param {boolean} props.collapsed - 좌측 메뉴 접힘 여부.
+ * @param {() => void} props.onToggle - 메뉴 접기/펼치기 handler.
+ * @param {() => void} props.onCalendarOpen - 캘린더 팝업 열기 handler.
+ * @param {() => void} props.onMessageDetailOpen - 사내쪽지 상세 팝업 열기 handler.
+ * @param {() => void} props.onCustomerDetailOpen - 고객관리 상세 팝업 열기 handler.
+ * @param {() => void} props.onSettingsOpen - 에이전트 API 설정 팝업 열기 handler.
+ * @param {Array<TodoItem>} props.todos - 캘린더 badge 계산에 사용할 ToDo 목록.
+ * @param {Array<SourceRecord>} props.messages - 사내쪽지 badge 계산에 사용할 목록.
+ * @param {Array<SourceRecord>} props.customers - 고객관리 badge 계산에 사용할 목록.
+ */
+function DashboardMenu({ collapsed, onToggle, onCalendarOpen, onMessageDetailOpen, onCustomerDetailOpen, onSettingsOpen, todos, messages = [], customers = [] }) {
   const [isCalendarTipOpen, setIsCalendarTipOpen] = useState(false);
   const monthPrefix = toDateKey(new Date()).slice(0, 7);
   const calendarTodos = todos
@@ -761,7 +867,7 @@ function DashboardMenu({ collapsed, onToggle, onCalendarOpen, onMessageDetailOpe
     { label: "사내쪽지", icon: <MessageSquareText size={24} />, onClick: onMessageDetailOpen, badgeCount: messages.length, badgeAction: onMessageDetailOpen },
     { label: "고객관리", icon: <UserRound size={24} />, onClick: onCustomerDetailOpen, badgeCount: customers.length, badgeAction: onCustomerDetailOpen },
     { href: "#priority-sources", label: "보고서", icon: <BarChart3 size={24} /> },
-    { href: "#today-work", label: "설정", icon: <Settings size={24} /> },
+    { label: "설정", icon: <Settings size={24} />, onClick: onSettingsOpen },
   ];
 
   return (
@@ -824,7 +930,159 @@ function DashboardMenu({ collapsed, onToggle, onCalendarOpen, onMessageDetailOpe
   );
 }
 
-/** ToDo 마감일 기준으로 현재 월 일정 건수를 표시하는 캘린더 팝업. */
+/**
+ * 설정 메뉴에서 agent API 목록과 sub-agent 직접 호출 UI를 보여준다.
+ *
+ * @param {object} props
+ * @param {Array<AgentApiSpec>} props.agents - 백엔드에서 받은 agent API metadata.
+ * @param {string} props.selectedAgentId - 현재 선택된 agent id.
+ * @param {(id: string) => void} props.setSelectedAgentId - 선택 agent setter.
+ * @param {string} props.input - 직접 호출할 자연어 메시지.
+ * @param {(value: string) => void} props.setInput - 자연어 메시지 setter.
+ * @param {object | null} props.result - agent 직접 호출 응답.
+ * @param {boolean} props.loading - 호출 진행 상태.
+ * @param {() => void} props.onRun - 선택 agent 호출 handler.
+ * @param {() => void} props.onClose - 팝업 닫기 handler.
+ */
+function AgentApiModal({ agents, selectedAgentId, setSelectedAgentId, input, setInput, result, loading, onRun, onClose }) {
+  const selectedAgent = agents.find((agent) => agent.id === selectedAgentId) || agents[0];
+  const [copiedUrl, setCopiedUrl] = useState("");
+
+  function handleAgentChange(event) {
+    const nextId = event.target.value;
+    const nextAgent = agents.find((agent) => agent.id === nextId);
+    setSelectedAgentId(nextId);
+    setInput(nextAgent?.sample_message || "");
+  }
+
+  function fullApiUrl(endpoint) {
+    if (!endpoint) return API_BASE_URL;
+    if (/^https?:\/\//.test(endpoint)) return endpoint;
+    return `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+  }
+
+  async function copyApiUrl(url) {
+    await navigator.clipboard.writeText(url);
+    setCopiedUrl(url);
+    window.setTimeout(() => setCopiedUrl((current) => (current === url ? "" : current)), 1300);
+  }
+
+  return (
+    <div className="modal-backdrop">
+      <section className="modal agent-api-modal" aria-label="에이전트 API 정보">
+        <div className="modal-title">
+          <div className="modal-title-copy">
+            <h2>에이전트 API</h2>
+            <span>Agent API와 메뉴별 연동 API의 전체 호출 URL을 확인합니다.</span>
+          </div>
+          <button className="text-button" type="button" onClick={onClose}>닫기</button>
+        </div>
+
+        <div className="agent-api-layout">
+          <div className="agent-api-list">
+            {agents.map((agent) => (
+              <button
+                className={agent.id === selectedAgentId ? "agent-api-item active" : "agent-api-item"}
+                type="button"
+                key={agent.id}
+                onClick={() => {
+                  setSelectedAgentId(agent.id);
+                  setInput(agent.sample_message || "");
+                }}
+              >
+                <strong>{agent.name}</strong>
+                <span><b>{agent.method}</b> {agent.endpoint}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="agent-api-detail">
+            {selectedAgent ? (
+              <>
+                <div className="agent-api-summary">
+                  <div className="agent-api-endpoint">
+                    <span className={`method-pill ${String(selectedAgent.method || "GET").toLowerCase()}`}>{selectedAgent.method}</span>
+                    <div className="api-url-row">
+                      <code>{fullApiUrl(selectedAgent.endpoint)}</code>
+                      <button
+                        className="copy-url-button"
+                        type="button"
+                        onClick={() => copyApiUrl(fullApiUrl(selectedAgent.endpoint))}
+                        title={copiedUrl === fullApiUrl(selectedAgent.endpoint) ? "복사됨" : "API URL 복사"}
+                        aria-label={copiedUrl === fullApiUrl(selectedAgent.endpoint) ? "API URL 복사됨" : "API URL 복사"}
+                      >
+                        <Copy size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  <strong>{selectedAgent.name}</strong>
+                  <p>{selectedAgent.description}</p>
+                  <pre>{JSON.stringify(selectedAgent.request_body || {}, null, 2)}</pre>
+                  <div className="agent-related-api-list">
+                    <strong>관련 메뉴 API</strong>
+                    {(selectedAgent.related_apis || []).map((api) => (
+                      <div className="agent-related-api-item" key={`${api.method}-${api.endpoint}`}>
+                        <span className={`method-pill ${String(api.method || "GET").toLowerCase()}`}>{api.method}</span>
+                        <div>
+                          <div className="api-url-row">
+                            <code>{fullApiUrl(api.endpoint)}</code>
+                            <button
+                              className="copy-url-button"
+                              type="button"
+                              onClick={() => copyApiUrl(fullApiUrl(api.endpoint))}
+                              title={copiedUrl === fullApiUrl(api.endpoint) ? "복사됨" : "API URL 복사"}
+                              aria-label={copiedUrl === fullApiUrl(api.endpoint) ? "API URL 복사됨" : "API URL 복사"}
+                            >
+                              <Copy size={14} />
+                            </button>
+                          </div>
+                          <p>{api.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <label>
+                  호출 대상
+                  <select value={selectedAgentId} onChange={handleAgentChange}>
+                    {agents.map((agent) => (
+                      <option key={agent.id} value={agent.id}>{agent.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  요청 메시지
+                  <textarea value={input} onChange={(event) => setInput(event.target.value)} />
+                </label>
+                <div className="modal-actions">
+                  <button className="primary-button" type="button" onClick={onRun} disabled={loading || !input.trim()}>
+                    {loading ? <Loader2 className="spin" size={16} /> : <Send size={16} />}
+                    호출
+                  </button>
+                </div>
+                <div className="agent-api-result">
+                  <strong>응답</strong>
+                  <pre>{result ? JSON.stringify(result, null, 2) : "아직 호출 결과가 없습니다."}</pre>
+                </div>
+              </>
+            ) : (
+              <div className="empty-state">에이전트 API 목록을 불러오고 있습니다.</div>
+            )}
+          </div>
+
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/**
+ * ToDo 마감일 기준으로 현재 월 일정 건수를 표시하는 캘린더 팝업.
+ *
+ * @param {object} props
+ * @param {Array<TodoItem>} props.todos - 캘린더에 표시할 ToDo 목록.
+ * @param {() => void} props.onClose - 팝업 닫기 handler.
+ */
 function CalendarModal({ todos, onClose }) {
   const today = new Date();
   const monthLabel = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long" }).format(today);
@@ -889,7 +1147,15 @@ function CalendarModal({ todos, onClose }) {
   );
 }
 
-/** 좌측 메뉴 사내쪽지 클릭 시 쪽지 목록 상세를 보여준다. */
+/**
+ * 좌측 메뉴 사내쪽지 클릭 시 쪽지 목록 상세를 보여준다.
+ *
+ * @param {object} props
+ * @param {Array<object>} props.messages - 상세 팝업에 렌더링할 사내쪽지 목록.
+ * @param {() => void} props.onCreate - 사내쪽지 등록 팝업 열기 handler.
+ * @param {(message: object) => void} props.onDelete - 사내쪽지 삭제 handler.
+ * @param {() => void} props.onClose - 팝업 닫기 handler.
+ */
 function MessageDetailModal({ messages, onCreate, onDelete, onClose }) {
   return (
     <div className="modal-backdrop">
@@ -939,7 +1205,15 @@ function MessageDetailModal({ messages, onCreate, onDelete, onClose }) {
   );
 }
 
-/** 좌측 메뉴 고객관리 클릭 시 사후관리 고객 목록 상세를 보여준다. */
+/**
+ * 좌측 메뉴 고객관리 클릭 시 사후관리 고객 목록 상세를 보여준다.
+ *
+ * @param {object} props
+ * @param {Array<object>} props.customers - 상세 팝업에 렌더링할 사후관리 고객 목록.
+ * @param {() => void} props.onCreate - 고객 등록 팝업 열기 handler.
+ * @param {(customer: object) => void} props.onDelete - 고객 삭제 handler.
+ * @param {() => void} props.onClose - 팝업 닫기 handler.
+ */
 function CustomerDetailModal({ customers, onCreate, onDelete, onClose }) {
   return (
     <div className="modal-backdrop">
@@ -994,10 +1268,10 @@ function CustomerDetailModal({ customers, onCreate, onDelete, onClose }) {
  *
  * @param {object} props
  * @param {{id: string, label: string}} props.column - column 식별자와 표시 이름.
- * @param {Array<object>} props.todos - 이 column에 속한 ToDo 목록.
- * @param {(todo: object) => void} props.onCardClick - 카드 클릭 시 상세 모달을 여는 handler.
- * @param {(todo: object) => void} props.onCardDelete - 카드 삭제 버튼 handler.
- * @param {(todo: object) => void} props.onPriorityClick - 카드 별 아이콘 클릭 handler.
+ * @param {Array<TodoItem>} props.todos - 이 column에 속한 ToDo 목록.
+ * @param {(todo: TodoItem) => void} props.onCardClick - 카드 클릭 시 상세 모달을 여는 handler.
+ * @param {(todo: TodoItem) => void} props.onCardDelete - 카드 삭제 버튼 handler.
+ * @param {(todo: TodoItem) => void} props.onPriorityClick - 카드 별 아이콘 클릭 handler.
  */
 function KanbanColumn({ column, todos, onCardClick, onCardDelete, onPriorityClick }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
@@ -1034,10 +1308,10 @@ function KanbanColumn({ column, todos, onCardClick, onCardDelete, onPriorityClic
  * 드래그 가능한 ToDo 카드를 우선순위와 원천 badge와 함께 렌더링한다.
  *
  * @param {object} props
- * @param {object} props.todo - 카드에 표시할 ToDo 데이터.
+ * @param {TodoItem} props.todo - 카드에 표시할 ToDo 데이터.
  * @param {() => void} props.onClick - 카드 본문 클릭 handler.
- * @param {(todo: object) => void} props.onDelete - 카드 삭제 handler.
- * @param {(todo: object) => void} props.onPriorityClick - 별 아이콘 클릭 handler.
+ * @param {(todo: TodoItem) => void} props.onDelete - 카드 삭제 handler.
+ * @param {(todo: TodoItem) => void} props.onPriorityClick - 별 아이콘 클릭 handler.
  */
 function TodoCard({ todo, onClick, onDelete, onPriorityClick }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: todo.id });
@@ -1094,6 +1368,14 @@ function TodoCard({ todo, onClick, onDelete, onPriorityClick }) {
  *
  * 사내쪽지와 사후관리 고객 패널이 같은 레이아웃을 공유하되, 항목 렌더링 방식은
  * 호출하는 쪽에서 ``renderItem``으로 주입한다.
+ *
+ * @param {object} props
+ * @param {string} props.title - 패널 제목.
+ * @param {React.ReactNode} props.icon - 제목 옆 아이콘.
+ * @param {Array<object>} props.items - 패널에 표시할 원천 데이터 목록.
+ * @param {string} props.emptyText - 항목이 없을 때 표시할 문구.
+ * @param {(item: object) => React.ReactNode} props.renderItem - 항목 렌더링 함수.
+ * @param {React.ReactNode | null} [props.action] - 제목 우측에 표시할 선택 액션.
  */
 function PriorityPanel({ title, icon, items, emptyText, renderItem, action = null }) {
   return (
@@ -1110,7 +1392,18 @@ function PriorityPanel({ title, icon, items, emptyText, renderItem, action = nul
   );
 }
 
-/** 사내쪽지 또는 고객 원천 데이터 항목 하나를 렌더링한다. */
+/**
+ * 사내쪽지 또는 고객 원천 데이터 항목 하나를 렌더링한다.
+ *
+ * @param {object} props
+ * @param {string} props.title - 항목 제목.
+ * @param {string} props.meta - 발신자/날짜 등 보조 정보.
+ * @param {string} props.description - 항목 설명.
+ * @param {"high" | "medium" | "low"} props.priority - 현재 우선순위.
+ * @param {boolean} props.linked - ToDo 연결 여부.
+ * @param {() => void} props.onAdd - ToDo 전환 handler.
+ * @param {() => void} [props.onPriorityClick] - 우선순위 순환 handler.
+ */
 function SourceItem({ title, meta, description, priority, linked, onAdd, onPriorityClick }) {
   const actionButton = (
     <button className={linked ? "ghost-button linked" : "ghost-button"} onClick={onAdd} disabled={linked}>
@@ -1145,7 +1438,18 @@ function SourceItem({ title, meta, description, priority, linked, onAdd, onPrior
   );
 }
 
-/** 시점 이동에 사용할 단기 기억 목록과 undo/redo 버튼을 렌더링한다. */
+/**
+ * 시점 이동에 사용할 단기 기억 목록과 undo/redo 버튼을 렌더링한다.
+ *
+ * @param {object} props
+ * @param {{undo: Array<object>, redo: Array<object>}} props.historyState - undo/redo 히스토리 metadata.
+ * @param {() => void} props.onClose - 팝업 닫기 handler.
+ * @param {(historyId: string) => void} props.onRestore - 선택 히스토리 복원 handler.
+ * @param {() => void} props.onUndo - undo 실행 handler.
+ * @param {() => void} props.onRedo - redo 실행 handler.
+ * @param {boolean} props.canUndo - undo 가능 여부.
+ * @param {boolean} props.canRedo - redo 가능 여부.
+ */
 function HistoryModal({ historyState, onClose, onRestore, onUndo, onRedo, canUndo, canRedo }) {
   return (
     <div className="modal-backdrop">

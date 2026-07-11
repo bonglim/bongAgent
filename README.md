@@ -5,26 +5,130 @@ Bong에이전트는 오늘 처리해야 할 ToDo, 사내쪽지, 사후관리 고
 ## 프로젝트 구조
 
 ```text
+.
+├── README.md
+├── agent.md              # MVP 요구사항/구현 지침 원문
+├── agent_han.md          # 한국어 상세 구현 지침
+├── .env.example          # 로컬 환경변수 예시(.env는 Git 제외)
+├── backend/
+│   ├── requirements.txt
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── agent.py          # 기존 import 경로 유지용 orchestration re-export
+│   │   ├── agents/
+│   │   │   ├── __init__.py
+│   │   │   ├── orchestrator.py    # 최상위 채팅 orchestration agent
+│   │   │   ├── shared.py          # AgentContext, DomainAgent, helper
+│   │   │   ├── message_agent.py   # 사내쪽지 관리/우선순위 추천 sub-agent
+│   │   │   ├── customer_agent.py  # 사후관리 고객 관리 sub-agent
+│   │   │   ├── todo_agent.py      # ToDo 관리 sub-agent
+│   │   │   └── llm_agent.py       # 일반 LLM 질문답변 fallback sub-agent
+│   │   ├── config.py         # .env 기반 환경 설정
+│   │   ├── llm_settings.py   # LLM 모델 목록/기본값/key env 매핑
+│   │   ├── llm_provider.py   # Gemini/OpenAI/mock LLM provider
+│   │   ├── main.py           # FastAPI 라우터와 API 엔드포인트
+│   │   ├── models.py         # API 요청/응답 Pydantic 모델
+│   │   └── repository.py     # 로컬 JSON 저장소 접근 계층
+│   └── data/
+│       ├── todos.json        # ToDo Kanban 데이터
+│       ├── messages.json     # 사내쪽지 데이터
+│       ├── customers.json    # 사후관리 고객 데이터
+│       ├── history.json      # undo/restore 히스토리
+│       └── redo.json         # redo 히스토리
+└── frontend/
+    ├── package.json
+    ├── package-lock.json
+    ├── index.html
+    └── src/
+        ├── App.jsx           # 메인 React 애플리케이션
+        ├── api.js            # 백엔드 API 클라이언트
+        ├── llmSettings.js    # LLM 콤보박스 설정 정규화/변경 핸들러
+        ├── main.jsx          # React 진입점
+        ├── styles.css        # KB 프리미엄 업무 시스템 톤의 UI 스타일
+        └── assets/
+            ├── kb-logo-mark.png
+            ├── profile-avatar.png
+            └── profile-avatar.svg
+```
+
+`backend/.venv`, `frontend/node_modules`, `frontend/dist`, `.env`는 로컬 실행 산출물 또는 개인 설정 파일이므로 Git 관리 대상에서 제외합니다.
+
+## Agent 구조
+
+우측 채팅창 입력은 `POST /api/assistant/command`로 백엔드에 전달되고, `backend/app/agents/orchestrator.py`의 `RuleBasedAssistantAgent`가 LangGraph 형식의 orchestrator 역할을 합니다. API 계약을 유지하기 위해 `backend/app/agent.py`는 기존 import 경로를 보존하는 re-export 파일로 남겨두었습니다.
+
+```text
 backend/
   app/
-    agent.py          # 규칙 기반 자연어 명령 처리
-    config.py         # .env 기반 환경 설정
-    llm_settings.py   # .env 기반 LLM 모델 목록/기본값/key env 매핑
-    llm_provider.py   # 향후 Gemini/OpenAI/LangChain/LangGraph 확장용 Provider
-    main.py           # FastAPI 라우터와 API 엔드포인트
-    models.py         # API 요청/응답 데이터 모델
-    repository.py     # 로컬 JSON 저장소 접근 계층
-  data/
-    todos.json
-    messages.json
-    customers.json
-frontend/
-  src/
-    api.js            # 백엔드 API 클라이언트
-    App.jsx           # 메인 React 애플리케이션
-    llmSettings.js    # LLM 콤보박스 설정 정규화/변경 핸들러
-    styles.css        # KB 프리미엄 업무 시스템 톤의 UI 스타일
+    agent.py                               # RuleBasedAssistantAgent re-export
+    agents/
+      orchestrator.py
+        RuleBasedAssistantAgent            # LangGraph 형식 최상위 orchestrator
+      shared.py
+        AgentContext                       # agent 간 공유 요청 context
+        DomainAgent                        # 도메인 agent Protocol
+      message_agent.py
+        InternalMessageManagementAgent     # 사내쪽지 조회/등록/삭제
+        InternalMessagePriorityRecommendationAgent
+      customer_agent.py
+        AftercareCustomerManagementAgent   # 사후관리 고객 조회/등록/삭제
+      todo_agent.py
+        TodoManagementAgent                # ToDo 생성/수정/삭제
+      llm_agent.py
+        LLMQuestionAnswerAgent             # 일반 LLM 질문 답변 fallback
 ```
+
+`orchestrator.py`는 `OrchestratorState`를 공유 상태로 사용하고, `message`, `customer`, `todo`, `llm` node를 조건부 edge로 연결합니다. `langgraph`가 설치되어 있으면 실제 `StateGraph`를 사용하고, 설치 전 로컬 실행 환경에서는 같은 `invoke()` 계약의 fallback graph로 동작합니다.
+
+라우팅 우선순위:
+
+1. `InternalMessageManagementAgent`
+   - `사내쪽지`, `쪽지`, `메시지` 같은 도메인 키워드와 `등록`, `삭제`, `목록` 등의 동작 키워드를 감지합니다.
+   - `JsonRepository.create_message`, `delete_message`, `list_messages`를 호출합니다.
+2. `AftercareCustomerManagementAgent`
+   - `사후고객`, `사후관리`, `고객관리`, `고객` 키워드와 관리 동작을 감지합니다.
+   - `JsonRepository.create_customer`, `delete_customer`, `list_customers`를 호출합니다.
+3. `TodoManagementAgent`
+   - 기존 자연어 ToDo 명령을 처리합니다.
+   - `추가`, `등록`, `할일`, `todo`, `ToDo`는 ToDo 생성으로, `진행중`, `완료`, `변경`은 수정으로, `삭제`, `지워`, `제거`는 삭제로 분류합니다.
+4. `LLMQuestionAnswerAgent`
+   - 위 agent가 처리하지 않는 일반 질문을 선택된 LLM provider로 전달합니다.
+
+예시 흐름:
+
+```text
+사용자 입력
+  ↓
+frontend/src/App.jsx submitChat()
+  ↓
+frontend/src/api.js sendAssistantCommand()
+  ↓
+backend/app/main.py /api/assistant/command
+  ↓
+RuleBasedAssistantAgent.handle()
+  ↓
+도메인별 agent.can_handle()
+  ↓
+선택된 agent.handle()
+  ↓
+AssistantCommandResponse 반환
+```
+
+## 소스 문서화 기준
+
+이 프로젝트는 코드 구조를 수업/시연 환경에서 바로 설명할 수 있도록 다음 기준으로 주석과 타입 정보를 유지합니다.
+
+- Python backend
+  - 모든 모듈에는 파일 역할을 설명하는 module docstring을 둡니다.
+  - 모든 class/function/method에는 docstring을 둡니다.
+  - 모든 함수 인자와 반환값에는 type annotation을 둡니다.
+  - 저장소, agent, provider처럼 책임이 큰 클래스에는 생성자 docstring과 핵심 의사결정 주석을 둡니다.
+  - 단순 대입 설명 같은 반복 주석은 피하고, 라우팅 순서, fallback, 히스토리 저장처럼 동작 의도가 중요한 부분에만 주석을 둡니다.
+- Frontend
+  - React 컴포넌트에는 역할 설명 주석을 둡니다.
+  - props가 많은 컴포넌트와 API client 함수에는 JSDoc `@param` annotation을 둡니다.
+  - TypeScript를 쓰지 않는 대신 `TodoItem`, `SourceRecord`, `AgentApiSpec` 같은 JSDoc typedef로 주요 데이터 구조를 문서화합니다.
+  - CSS는 큰 화면 영역이나 기능 단위로 섹션 주석을 유지합니다.
 
 ## 설정 파일
 

@@ -119,6 +119,13 @@ class AssistantCommandRequest(BaseModel):
     model: LLMModel | None = None
 
 
+class AgentInvokeRequest(BaseModel):
+    """개별 agent API를 직접 호출할 때 사용하는 요청 payload."""
+
+    message: str = Field(..., min_length=1)
+    model: LLMModel | None = None
+
+
 class AssistantCommandResponse(BaseModel):
     """명령 분류와 처리 후 반환되는 구조화된 assistant 응답."""
 

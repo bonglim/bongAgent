@@ -9,15 +9,165 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .agent import RuleBasedAssistantAgent
+from .agents.customer_agent import AftercareCustomerManagementAgent
+from .agents.llm_agent import LLMQuestionAnswerAgent
+from .agents.message_agent import InternalMessageManagementAgent, InternalMessagePriorityRecommendationAgent
+from .agents.shared import AgentContext, DomainAgent
+from .agents.todo_agent import TodoManagementAgent
 from .config import Settings, get_settings
 from .llm_settings import public_llm_models
 from .llm_provider import build_llm_provider
-from .models import AftercareCustomer, AftercareCustomerCreate, AftercareCustomerUpdate, AssistantCommandRequest, AssistantCommandResponse, InternalMessage, InternalMessageCreate, InternalMessageUpdate, Todo, TodoCreate, TodoUpdate
+from .models import AftercareCustomer, AftercareCustomerCreate, AftercareCustomerUpdate, AgentInvokeRequest, AssistantCommandRequest, AssistantCommandResponse, InternalMessage, InternalMessageCreate, InternalMessageUpdate, Todo, TodoCreate, TodoUpdate
 from .repository import JsonRepository
 
 
 app = FastAPI(title="Bong에이전트 API", version="0.1.0")
 settings = get_settings()
+
+AGENT_API_SPECS = [
+    {
+        "id": "orchestrator",
+        "name": "Orchestration Agent",
+        "description": "입력 의도를 판별해 적절한 sub-agent로 라우팅합니다.",
+        "method": "POST",
+        "endpoint": "/api/agents/orchestrator/invoke",
+        "request_body": {"message": "string", "model": "string | null"},
+        "sample_message": "쪽지 우선순위 설정해줘",
+        "related_apis": [
+            {"method": "POST", "endpoint": "/api/assistant/command", "description": "채팅창 자연어 명령을 orchestrator로 전달"},
+            {"method": "GET", "endpoint": "/api/agents", "description": "설정 팝업용 agent API metadata 조회"},
+            {"method": "GET", "endpoint": "/api/history", "description": "명령 처리 후 히스토리 상태 조회"},
+        ],
+    },
+    {
+        "id": "message",
+        "name": "사내쪽지관리 Agent",
+        "description": "사내쪽지 조회, 등록, 삭제와 우선순위 추천 sub-agent 위임을 처리합니다.",
+        "method": "POST",
+        "endpoint": "/api/agents/message/invoke",
+        "request_body": {"message": "string", "model": "string | null"},
+        "sample_message": "사내쪽지 목록 보여줘",
+        "related_apis": [
+            {"method": "GET", "endpoint": "/api/messages", "description": "사내쪽지 목록 조회"},
+            {"method": "POST", "endpoint": "/api/messages", "description": "사내쪽지 등록"},
+            {"method": "PATCH", "endpoint": "/api/messages/{message_id}", "description": "사내쪽지 우선순위 수정"},
+            {"method": "DELETE", "endpoint": "/api/messages/{message_id}", "description": "사내쪽지 삭제"},
+            {"method": "POST", "endpoint": "/api/todos/from-message/{message_id}", "description": "사내쪽지를 ToDo로 전환"},
+        ],
+    },
+    {
+        "id": "message-priority",
+        "name": "사내쪽지 우선순위 추천 Sub-agent",
+        "description": "LLM 또는 fallback 규칙으로 사내쪽지 우선순위를 추천하고 저장합니다.",
+        "method": "POST",
+        "endpoint": "/api/agents/message-priority/invoke",
+        "request_body": {"message": "string", "model": "string | null"},
+        "sample_message": "쪽지 우선순위 설정해줘",
+        "related_apis": [
+            {"method": "GET", "endpoint": "/api/messages", "description": "우선순위 추천 대상 쪽지 조회"},
+            {"method": "PATCH", "endpoint": "/api/messages/{message_id}", "description": "추천된 쪽지 우선순위 저장"},
+        ],
+    },
+    {
+        "id": "customer",
+        "name": "사후고객관리 Agent",
+        "description": "사후관리 고객 조회, 등록, 삭제를 처리합니다.",
+        "method": "POST",
+        "endpoint": "/api/agents/customer/invoke",
+        "request_body": {"message": "string", "model": "string | null"},
+        "sample_message": "사후관리 고객 목록 보여줘",
+        "related_apis": [
+            {"method": "GET", "endpoint": "/api/customers/aftercare", "description": "사후관리 고객 목록 조회"},
+            {"method": "POST", "endpoint": "/api/customers/aftercare", "description": "사후관리 고객 등록"},
+            {"method": "PATCH", "endpoint": "/api/customers/aftercare/{customer_id}", "description": "고객 우선순위 수정"},
+            {"method": "DELETE", "endpoint": "/api/customers/aftercare/{customer_id}", "description": "사후관리 고객 삭제"},
+            {"method": "POST", "endpoint": "/api/todos/from-customer/{customer_id}", "description": "고객 레코드를 ToDo로 전환"},
+        ],
+    },
+    {
+        "id": "todo",
+        "name": "ToDo관리 Agent",
+        "description": "자연어 ToDo 생성, 상태 변경, 삭제를 처리합니다.",
+        "method": "POST",
+        "endpoint": "/api/agents/todo/invoke",
+        "request_body": {"message": "string", "model": "string | null"},
+        "sample_message": "오늘 오후 3시에 김민수 고객 전화 추가해줘",
+        "related_apis": [
+            {"method": "GET", "endpoint": "/api/todos", "description": "ToDo 목록 조회"},
+            {"method": "POST", "endpoint": "/api/todos", "description": "ToDo 생성"},
+            {"method": "PATCH", "endpoint": "/api/todos/{todo_id}", "description": "ToDo 상태, 우선순위, 내용 수정"},
+            {"method": "DELETE", "endpoint": "/api/todos/{todo_id}", "description": "ToDo 삭제"},
+            {"method": "GET", "endpoint": "/api/history", "description": "ToDo 변경 이력 조회"},
+        ],
+    },
+    {
+        "id": "llm",
+        "name": "LLM 질문답변 Agent",
+        "description": "업무 명령이 아닌 일반 질문을 선택된 LLM provider로 전달합니다.",
+        "method": "POST",
+        "endpoint": "/api/agents/llm/invoke",
+        "request_body": {"message": "string", "model": "string | null"},
+        "sample_message": "고객에게 보낼 만기 안내 문구 작성해줘",
+        "related_apis": [
+            {"method": "GET", "endpoint": "/api/llm/models", "description": "선택 가능한 LLM 모델 조회"},
+            {"method": "POST", "endpoint": "/api/assistant/command", "description": "일반 질문을 채팅창에서 LLM agent로 라우팅"},
+        ],
+    },
+]
+
+API_METHOD_SUMMARY = [
+    {
+        "method": "GET",
+        "summary": "조회 API",
+        "description": "대시보드, 설정 팝업, 모델 선택기에 필요한 데이터를 읽습니다.",
+        "endpoints": [
+            {"endpoint": "/api/health", "description": "서비스 상태 확인"},
+            {"endpoint": "/api/llm/models", "description": "LLM 모델 옵션 조회"},
+            {"endpoint": "/api/agents", "description": "Agent API 정보와 메서드 요약 조회"},
+            {"endpoint": "/api/todos", "description": "ToDo 목록 조회"},
+            {"endpoint": "/api/history", "description": "undo/redo 히스토리 조회"},
+            {"endpoint": "/api/messages", "description": "사내쪽지 목록 조회"},
+            {"endpoint": "/api/customers/aftercare", "description": "사후관리 고객 목록 조회"},
+        ],
+    },
+    {
+        "method": "POST",
+        "summary": "생성/실행 API",
+        "description": "새 데이터를 만들거나 agent, history, 자연어 명령을 실행합니다.",
+        "endpoints": [
+            {"endpoint": "/api/agents/{agent_id}/invoke", "description": "orchestrator 또는 sub-agent 직접 호출"},
+            {"endpoint": "/api/assistant/command", "description": "채팅창 자연어 명령 처리"},
+            {"endpoint": "/api/todos", "description": "ToDo 생성"},
+            {"endpoint": "/api/todos/from-message/{message_id}", "description": "사내쪽지를 ToDo로 전환"},
+            {"endpoint": "/api/todos/from-customer/{customer_id}", "description": "사후관리 고객을 ToDo로 전환"},
+            {"endpoint": "/api/messages", "description": "사내쪽지 등록"},
+            {"endpoint": "/api/customers/aftercare", "description": "사후관리 고객 등록"},
+            {"endpoint": "/api/history/undo", "description": "이전 상태로 되돌리기"},
+            {"endpoint": "/api/history/redo", "description": "되돌린 상태 다시 적용"},
+            {"endpoint": "/api/history/restore/{history_id}", "description": "선택 히스토리로 복원"},
+        ],
+    },
+    {
+        "method": "PATCH",
+        "summary": "부분 수정 API",
+        "description": "기존 업무, 쪽지, 고객의 일부 필드를 저장합니다.",
+        "endpoints": [
+            {"endpoint": "/api/todos/{todo_id}", "description": "ToDo 상태, 우선순위, 내용 수정"},
+            {"endpoint": "/api/messages/{message_id}", "description": "사내쪽지 우선순위 수정"},
+            {"endpoint": "/api/customers/aftercare/{customer_id}", "description": "사후관리 고객 우선순위 수정"},
+        ],
+    },
+    {
+        "method": "DELETE",
+        "summary": "삭제 API",
+        "description": "사용자가 선택한 업무, 쪽지, 고객 데이터를 삭제합니다.",
+        "endpoints": [
+            {"endpoint": "/api/todos/{todo_id}", "description": "ToDo 삭제"},
+            {"endpoint": "/api/messages/{message_id}", "description": "사내쪽지 삭제"},
+            {"endpoint": "/api/customers/aftercare/{customer_id}", "description": "사후관리 고객 삭제"},
+        ],
+    },
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -49,6 +199,21 @@ def get_agent(repository: JsonRepository = Depends(get_repository)) -> RuleBased
     return RuleBasedAssistantAgent(repository, build_llm_provider(settings))
 
 
+def _get_agent_by_id(agent_id: str, repository: JsonRepository, settings_obj: Settings) -> DomainAgent | RuleBasedAssistantAgent | None:
+    """agent id에 맞는 orchestrator 또는 sub-agent 인스턴스를 만든다."""
+
+    llm_provider = build_llm_provider(settings_obj)
+    agents = {
+        "orchestrator": RuleBasedAssistantAgent(repository, llm_provider),
+        "message": InternalMessageManagementAgent(repository, llm_provider),
+        "message-priority": InternalMessagePriorityRecommendationAgent(repository, llm_provider),
+        "customer": AftercareCustomerManagementAgent(repository),
+        "todo": TodoManagementAgent(repository),
+        "llm": LLMQuestionAnswerAgent(llm_provider),
+    }
+    return agents.get(agent_id)
+
+
 @app.get("/api/health")
 def health_check() -> dict:
     """로컬 smoke test와 배포 상태 확인용 최소 health payload를 반환한다."""
@@ -63,6 +228,37 @@ def list_llm_models(settings_obj: Settings = Depends(get_settings)) -> dict:
     # 브라우저에는 모델 id/label/provider만 내려주고 key 정보는 숨긴다.
 
     return public_llm_models(settings_obj)
+
+
+@app.get("/api/agents")
+def list_agent_apis() -> dict:
+    """설정 팝업에 표시할 agent API 목록과 호출 정보를 반환한다."""
+    # 프론트엔드가 agent별 API UI와 HTTP method별 요약을 구성할 수 있도록 metadata를 내려준다.
+
+    return {
+        "info_endpoint": {"method": "GET", "endpoint": "/api/agents"},
+        "invoke_pattern": {"method": "POST", "endpoint": "/api/agents/{agent_id}/invoke"},
+        "method_summary": API_METHOD_SUMMARY,
+        "agents": AGENT_API_SPECS,
+    }
+
+
+@app.post("/api/agents/{agent_id}/invoke", response_model=AssistantCommandResponse)
+def invoke_agent_api(
+    agent_id: str,
+    payload: AgentInvokeRequest,
+    repository: JsonRepository = Depends(get_repository),
+    settings_obj: Settings = Depends(get_settings),
+) -> AssistantCommandResponse:
+    """orchestrator 또는 지정한 sub-agent를 직접 호출한다."""
+    # 설정 팝업의 agent API 테스트 UI에서 사용하는 직접 호출 endpoint다.
+
+    agent = _get_agent_by_id(agent_id, repository, settings_obj)
+    if not agent:
+        raise HTTPException(status_code=404, detail="에이전트를 찾을 수 없습니다.")
+    if agent_id == "orchestrator":
+        return agent.handle(payload.message, payload.model)
+    return agent.handle(AgentContext(message=payload.message.strip(), model=payload.model))
 
 
 @app.get("/api/todos", response_model=list[Todo])

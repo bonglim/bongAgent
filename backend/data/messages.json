@@ -34,7 +34,7 @@
     "title": "GenAI 2.0 기술협상 참여 요청",
     "sender": "금융AI2센터",
     "received_at": "2026-07-07",
-    "priority": "low",
+    "priority": "medium",
     "status": "todo_linked",
     "body": "에이전트 기술협상을 위해 참석 바랍니다. 관련 자료는 첨부파일을 확인해 주세요.",
     "linked_todo_id": "todo_ac4b1729"

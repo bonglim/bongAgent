@@ -48,7 +48,7 @@ class MockLLMProvider(LLMProvider):
 class GeminiProvider(LLMProvider):
     """일반 채팅 fallback 응답을 Gemini로 생성하는 provider."""
 
-    def __init__(self, api_key: str, model: str):
+    def __init__(self, api_key: str, model: str) -> None:
         """Gemini 채팅 요청에 필요한 설정을 보관한다."""
         # Gemini API 호출에 필요한 API 키와 모델명을 보관한다.
 
@@ -122,7 +122,7 @@ class GeminiProvider(LLMProvider):
 class OpenAIProvider(LLMProvider):
     """일반 채팅 fallback 응답을 OpenAI Responses API로 생성하는 provider."""
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str) -> None:
         """OpenAI 채팅 요청에 필요한 API key를 보관한다."""
         # OpenAI API 호출에 필요한 API 키를 보관한다.
 
@@ -188,7 +188,7 @@ class OpenAIProvider(LLMProvider):
 class RoutedLLMProvider(LLMProvider):
     """선택된 모델에 맞는 provider로 각 채팅 요청을 라우팅한다."""
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings) -> None:
         """런타임 설정을 사용해 provider 라우팅에 필요한 상태를 준비한다."""
         # 선택 모델별로 사용할 수 있는 실제 provider와 mock fallback을 준비한다.
 

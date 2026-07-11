@@ -1,0 +1,192 @@
+{"kind":"deck","id":"pr/wal6jn","name":"Deck"}
+{"kind":"layout","layoutId":"484509c4-d7ed-45dd-bf7b-ed4ed167c8af","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"318b79ba-0d98-465d-aff7-1b48e5dc6381","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/inyvog","slide":1,"title":"FINAL PROJECT","textShapes":6}
+{"kind":"textbox","id":"sh/fu18jqh0","slide":1,"text":"FINAL PROJECT","textPreview":"FINAL PROJECT","textChars":13,"textLines":1,"bbox":[72,150,320,30]}
+{"kind":"textbox","id":"sh/m94fu18j","slide":1,"text":"Bong에이전트 MVP","textPreview":"Bong에이전트 MVP","textChars":12,"textLines":1,"bbox":[72,205,780,74]}
+{"kind":"textbox","id":"sh/xobm58z2","slide":1,"text":"은행 직원의 ToDo, 사내쪽지, 사후고객관리를 한 화면에서 처리하는\n로컬 풀스택 업무 비서","textPreview":"은행 직원의 ToDo, 사내쪽지, 사후고객관리를 한 화면에서 처리하는 | 로컬 풀스택 업무 비서","textChars":51,"textLines":2,"bbox":[74,305,820,84]}
+{"kind":"shape","id":"sh/83itgfml","slide":1,"bbox":[72,468,1030,74]}
+{"kind":"textbox","id":"sh/fil0rqd4","slide":1,"text":"FastAPI · React/Vite · JSON Repository · Orchestration Agent · LLM Priority Recommendation","textPreview":"FastAPI · React/Vite · JSON Repository · Orchestration Agent · LLM Priority Recommendation","textChars":90,"textLines":1,"bbox":[102,493,970,30]}
+{"kind":"textbox","id":"sh/qxs72x4n","slide":1,"text":"Bong에이전트 MVP · 최종 발표","textPreview":"Bong에이전트 MVP · 최종 발표","textChars":20,"textLines":1,"bbox":[72,666,420,24]}
+{"kind":"textbox","id":"sh/xkf6dcbu","slide":1,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1148,662,60,28]}
+{"kind":"image","id":"im/58z25kb6","slide":1,"name":"","alt":"KB logo mark","bbox":[72,60,84,54]}
+{"kind":"notes","id":"nt/inyvog","slide":1,"text":""}
+{"kind":"slide","id":"sl/as9n5k","slide":2,"title":"01  목적","textShapes":10}
+{"kind":"textbox","id":"sh/0nuxc3yl","slide":2,"text":"01  목적","textPreview":"01  목적","textChars":6,"textLines":1,"bbox":[72,54,220,30]}
+{"kind":"textbox","id":"sh/p8nqxs72","slide":2,"text":"흩어진 업무 신호를 하나의 실행 화면으로 통합","textPreview":"흩어진 업무 신호를 하나의 실행 화면으로 통합","textChars":25,"textLines":1,"bbox":[72,98,880,50]}
+{"kind":"shape","id":"sh/itgfmlkj","slide":2,"bbox":[84,205,1030,92]}
+{"kind":"textbox","id":"sh/7ed8bat4","slide":2,"text":"문제","textPreview":"문제","textChars":2,"textLines":1,"bbox":[116,227,140,30]}
+{"kind":"textbox","id":"sh/0z61032l","slide":2,"text":"ToDo, 사내쪽지, 사후고객관리 정보가 분리되어 우선순위 판단과 실행 전환이 늦어짐","textPreview":"ToDo, 사내쪽지, 사후고객관리 정보가 분리되어 우선순위 판단과 실행 전환이 늦어짐","textChars":47,"textLines":1,"bbox":[278,225,780,44]}
+{"kind":"shape","id":"sh/pkzupwb2","slide":2,"bbox":[84,327,1030,92]}
+{"kind":"textbox","id":"sh/i5sneloj","slide":2,"text":"목표","textPreview":"목표","textChars":2,"textLines":1,"bbox":[116,349,140,30]}
+{"kind":"textbox","id":"sh/7qpg3ex0","slide":2,"text":"오늘 업무를 Kanban으로 보고, 쪽지와 고객 이슈를 즉시 ToDo로 전환","textPreview":"오늘 업무를 Kanban으로 보고, 쪽지와 고객 이슈를 즉시 ToDo로 전환","textChars":42,"textLines":1,"bbox":[278,347,780,44]}
+{"kind":"shape","id":"sh/fu18jqh0","slide":2,"bbox":[84,449,1030,92]}
+{"kind":"textbox","id":"sh/m94fu18j","slide":2,"text":"차별점","textPreview":"차별점","textChars":3,"textLines":1,"bbox":[116,471,140,30]}
+{"kind":"textbox","id":"sh/x0nuxc3y","slide":2,"text":"자연어 명령과 agent orchestration으로 CRUD와 일반 LLM 질문을 같은 채팅창에서 처리","textPreview":"자연어 명령과 agent orchestration으로 CRUD와 일반 LLM 질문을 같은 채팅창에서 처리","textChars":58,"textLines":1,"bbox":[278,469,780,44]}
+{"kind":"textbox","id":"sh/4fu18jqh","slide":2,"text":"Bong에이전트 MVP · 최종 발표","textPreview":"Bong에이전트 MVP · 최종 발표","textChars":20,"textLines":1,"bbox":[72,666,420,24]}
+{"kind":"textbox","id":"sh/fil0rqd4","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1148,662,60,28]}
+{"kind":"image","id":"im/m1cfa9w3","slide":2,"name":"","alt":"KB logo mark","bbox":[1112,54,84,54]}
+{"kind":"notes","id":"nt/as9n5k","slide":2,"text":""}
+{"kind":"slide","id":"sl/hftr0o","slide":3,"title":"02  구현 경과","textShapes":19}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":3,"text":"02  구현 경과","textPreview":"02  구현 경과","textChars":9,"textLines":1,"bbox":[72,54,260,30]}
+{"kind":"textbox","id":"sh/r65wjudg","slide":3,"text":"단일 MVP에서 agent API까지 단계적으로 확장","textPreview":"단일 MVP에서 agent API까지 단계적으로 확장","textChars":29,"textLines":1,"bbox":[72,98,900,50]}
+{"kind":"shape","id":"sh/g3ex0nux","slide":3,"bbox":[84,232,188,228]}
+{"kind":"textbox","id":"sh/5o7qpg3e","slide":3,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[102,252,44,38]}
+{"kind":"textbox","id":"sh/yxobm58z","slide":3,"text":"MVP 대시보드","textPreview":"MVP 대시보드","textChars":8,"textLines":1,"bbox":[102,312,150,58]}
+{"kind":"textbox","id":"sh/nih4byhg","slide":3,"text":"Kanban, 사내쪽지, 고객관리, 채팅 패널","textPreview":"Kanban, 사내쪽지, 고객관리, 채팅 패널","textChars":25,"textLines":1,"bbox":[102,388,150,78]}
+{"kind":"shape","id":"sh/g7adsji5","slide":3,"bbox":[306,232,188,228]}
+{"kind":"textbox","id":"sh/9s36hcrm","slide":3,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[324,252,44,38]}
+{"kind":"textbox","id":"sh/d8v6psfi","slide":3,"text":"데이터 연동","textPreview":"데이터 연동","textChars":6,"textLines":1,"bbox":[324,312,150,58]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":3,"text":"쪽지·고객·ToDo JSON CRUD와 히스토리","textPreview":"쪽지·고객·ToDo JSON CRUD와 히스토리","textChars":26,"textLines":1,"bbox":[324,388,150,78]}
+{"kind":"shape","id":"sh/z25kb6xk","slide":3,"bbox":[528,232,188,228]}
+{"kind":"textbox","id":"sh/6hcrmhk3","slide":3,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[546,252,44,38]}
+{"kind":"textbox","id":"sh/dg7adsji","slide":3,"text":"Agent 분리","textPreview":"Agent 분리","textChars":8,"textLines":1,"bbox":[546,312,150,58]}
+{"kind":"textbox","id":"sh/ovahoza1","slide":3,"text":"orchestrator와 4개 sub-agent","textPreview":"orchestrator와 4개 sub-agent","textChars":26,"textLines":1,"bbox":[546,388,150,78]}
+{"kind":"shape","id":"sh/vahoza1g","slide":3,"bbox":[750,232,188,228]}
+{"kind":"textbox","id":"sh/6tovahoz","slide":3,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[768,252,44,38]}
+{"kind":"textbox","id":"sh/dsji5sne","slide":3,"text":"LLM 추천","textPreview":"LLM 추천","textChars":6,"textLines":1,"bbox":[768,312,150,58]}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":3,"text":"사내쪽지 우선순위 추천 sub-agent와 fallback 규칙","textPreview":"사내쪽지 우선순위 추천 sub-agent와 fallback 규칙","textChars":35,"textLines":1,"bbox":[768,388,150,78]}
+{"kind":"shape","id":"sh/kjm1cfa9","slide":3,"bbox":[972,232,188,228]}
+{"kind":"textbox","id":"sh/94fu18jq","slide":3,"text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[990,252,44,38]}
+{"kind":"textbox","id":"sh/2hwfyxob","slide":3,"text":"API UI","textPreview":"API UI","textChars":6,"textLines":1,"bbox":[990,312,150,58]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":3,"text":"설정 팝업에서 agent endpoint 호출과 URL 복사","textPreview":"설정 팝업에서 agent endpoint 호출과 URL 복사","textChars":33,"textLines":1,"bbox":[990,388,150,78]}
+{"kind":"textbox","id":"sh/gvy90je9","slide":3,"text":"Bong에이전트 MVP · 최종 발표","textPreview":"Bong에이전트 MVP · 최종 발표","textChars":20,"textLines":1,"bbox":[72,666,420,24]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1148,662,60,28]}
+{"kind":"image","id":"im/oza1gvy9","slide":3,"name":"","alt":"KB logo mark","bbox":[1112,54,84,54]}
+{"kind":"notes","id":"nt/hftr0o","slide":3,"text":""}
+{"kind":"slide","id":"sl/rmjks7","slide":4,"title":"03  전체 구조","textShapes":17}
+{"kind":"textbox","id":"sh/9cvixcze","slide":4,"text":"03  전체 구조","textPreview":"03  전체 구조","textChars":9,"textLines":1,"bbox":[72,54,260,30]}
+{"kind":"textbox","id":"sh/gr2p8nqx","slide":4,"text":"프론트엔드, API, Agent, Repository를 명확히 분리","textPreview":"프론트엔드, API, Agent, Repository를 명확히 분리","textChars":37,"textLines":1,"bbox":[72,98,920,50]}
+{"kind":"shape","id":"sh/nih4byhg","slide":4,"bbox":[74,215,248,260]}
+{"kind":"textbox","id":"sh/yxobm58z","slide":4,"text":"React/Vite UI","textPreview":"React/Vite UI","textChars":13,"textLines":1,"bbox":[96,238,200,34]}
+{"kind":"textbox","id":"sh/5o7qpg3e","slide":4,"text":"App.jsx\napi.js\nstyles.css","textPreview":"App.jsx | api.js | styles.css","textChars":25,"textLines":3,"bbox":[96,292,200,74]}
+{"kind":"textbox","id":"sh/g3ex0nux","slide":4,"text":"대시보드, 모달, 채팅, 설정 API 팝업","textPreview":"대시보드, 모달, 채팅, 설정 API 팝업","textChars":23,"textLines":1,"bbox":[96,392,200,64]}
+{"kind":"shape","id":"sh/rmhk3q5o","slide":4,"bbox":[360,215,248,260]}
+{"kind":"textbox","id":"sh/y1kre1w7","slide":4,"text":"FastAPI Router","textPreview":"FastAPI Router","textChars":14,"textLines":1,"bbox":[382,238,200,34]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":4,"text":"main.py\nmodels.py","textPreview":"main.py | models.py","textChars":17,"textLines":2,"bbox":[382,292,200,74]}
+{"kind":"textbox","id":"sh/94fu18jq","slide":4,"text":"REST API와 agent 직접 호출 endpoint","textPreview":"REST API와 agent 직접 호출 endpoint","textChars":30,"textLines":1,"bbox":[382,392,200,64]}
+{"kind":"shape","id":"sh/2hwfyxob","slide":4,"bbox":[646,215,248,260]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":4,"text":"Agent Layer","textPreview":"Agent Layer","textChars":11,"textLines":1,"bbox":[668,238,200,34]}
+{"kind":"textbox","id":"sh/gvy90je9","slide":4,"text":"orchestrator.py\nmessage/customer/todo/llm","textPreview":"orchestrator.py | message/customer/todo/llm","textChars":41,"textLines":2,"bbox":[668,292,200,74]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":4,"text":"도메인별 can_handle → handle 위임","textPreview":"도메인별 can_handle → handle 위임","textChars":27,"textLines":1,"bbox":[668,392,200,64]}
+{"kind":"shape","id":"sh/2p8nqxs7","slide":4,"bbox":[932,215,248,260]}
+{"kind":"textbox","id":"sh/ra5gbq1o","slide":4,"text":"JSON Storage","textPreview":"JSON Storage","textChars":12,"textLines":1,"bbox":[954,238,200,34]}
+{"kind":"textbox","id":"sh/kzupwb2h","slide":4,"text":"repository.py\ndata/*.json","textPreview":"repository.py | data/*.json","textChars":25,"textLines":2,"bbox":[954,292,200,74]}
+{"kind":"textbox","id":"sh/9knih4by","slide":4,"text":"CRUD, undo/redo, 원천 연결 관리","textPreview":"CRUD, undo/redo, 원천 연결 관리","textChars":25,"textLines":1,"bbox":[954,392,200,64]}
+{"kind":"textbox","id":"sh/d8v6psfi","slide":4,"text":"사용자 입력 → /api/assistant/command → RuleBasedAssistantAgent → 선택된 sub-agent → JSON 저장소 → UI 갱신","textPreview":"사용자 입력 → /api/assistant/command → RuleBasedAssistantAgent → 선택된 sub-agent → JSON 저장소 → UI 갱신","textChars":92,"textLines":1,"bbox":[96,542,1040,38]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":4,"text":"Bong에이전트 MVP · 최종 발표","textPreview":"Bong에이전트 MVP · 최종 발표","textChars":20,"textLines":1,"bbox":[72,666,420,24]}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1148,662,60,28]}
+{"kind":"image","id":"im/za1gvy90","slide":4,"name":"","alt":"KB logo mark","bbox":[1112,54,84,54]}
+{"kind":"notes","id":"nt/rmjks7","slide":4,"text":""}
+{"kind":"slide","id":"sl/5fpzs5","slide":5,"title":"04  핵심 기능","textShapes":12}
+{"kind":"textbox","id":"sh/m94fu18j","slide":5,"text":"04  핵심 기능","textPreview":"04  핵심 기능","textChars":9,"textLines":1,"bbox":[72,54,260,30]}
+{"kind":"textbox","id":"sh/fu18jqh0","slide":5,"text":"업무 실행 화면과 자연어 agent가 하나의 흐름으로 연결","textPreview":"업무 실행 화면과 자연어 agent가 하나의 흐름으로 연결","textChars":32,"textLines":1,"bbox":[72,98,930,50]}
+{"kind":"shape","id":"sh/83itgfml","slide":5,"bbox":[98,198,930,66]}
+{"kind":"textbox","id":"sh/xobm58z2","slide":5,"text":"Kanban 업무판","textPreview":"Kanban 업무판","textChars":10,"textLines":1,"bbox":[128,216,260,28]}
+{"kind":"textbox","id":"sh/qxs72x4n","slide":5,"text":"할일/진행중/완료 상태, Drag & Drop, 우선순위 표시","textPreview":"할일/진행중/완료 상태, Drag & Drop, 우선순위 표시","textChars":34,"textLines":1,"bbox":[420,216,560,30]}
+{"kind":"shape","id":"sh/fil0rqd4","slide":5,"bbox":[98,292,930,66]}
+{"kind":"textbox","id":"sh/4zidonyd","slide":5,"text":"사내쪽지·고객관리","textPreview":"사내쪽지·고객관리","textChars":9,"textLines":1,"bbox":[128,310,260,28]}
+{"kind":"textbox","id":"sh/xkf6dcbu","slide":5,"text":"좌측 메뉴 팝업에서 등록/삭제, 대시보드 우선순위 패널과 데이터 연동","textPreview":"좌측 메뉴 팝업에서 등록/삭제, 대시보드 우선순위 패널과 데이터 연동","textChars":38,"textLines":1,"bbox":[420,310,560,30]}
+{"kind":"shape","id":"sh/1kre1w7m","slide":5,"bbox":[98,386,930,66]}
+{"kind":"textbox","id":"sh/c3ylc7u5","slide":5,"text":"자연어 명령","textPreview":"자연어 명령","textChars":6,"textLines":1,"bbox":[128,404,260,28]}
+{"kind":"textbox","id":"sh/ji5snelo","slide":5,"text":"ToDo 생성/상태 변경/삭제, 쪽지 우선순위 설정, 일반 LLM 질문 fallback","textPreview":"ToDo 생성/상태 변경/삭제, 쪽지 우선순위 설정, 일반 LLM 질문 fallback","textChars":48,"textLines":1,"bbox":[420,404,560,30]}
+{"kind":"shape","id":"sh/uxc3ylc7","slide":5,"bbox":[98,480,930,66]}
+{"kind":"textbox","id":"sh/1cfa9w3m","slide":5,"text":"Agent API UI","textPreview":"Agent API UI","textChars":12,"textLines":1,"bbox":[128,498,260,28]}
+{"kind":"textbox","id":"sh/crmhk3q5","slide":5,"text":"설정 메뉴에서 sub-agent endpoint 확인, 직접 호출, 전체 URL 복사","textPreview":"설정 메뉴에서 sub-agent endpoint 확인, 직접 호출, 전체 URL 복사","textChars":47,"textLines":1,"bbox":[420,498,560,30]}
+{"kind":"textbox","id":"sh/j6tovaho","slide":5,"text":"Bong에이전트 MVP · 최종 발표","textPreview":"Bong에이전트 MVP · 최종 발표","textChars":20,"textLines":1,"bbox":[72,666,420,24]}
+{"kind":"textbox","id":"sh/ulwval87","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1148,662,60,28]}
+{"kind":"image","id":"im/cj6tovah","slide":5,"name":"","alt":"KB logo mark","bbox":[1112,54,84,54]}
+{"kind":"notes","id":"nt/5fpzs5","slide":5,"text":""}
+{"kind":"slide","id":"sl/hhbnaj","slide":6,"title":"05  중요 소스","textShapes":16}
+{"kind":"textbox","id":"sh/k3q5o7qp","slide":6,"text":"05  중요 소스","textPreview":"05  중요 소스","textChars":9,"textLines":1,"bbox":[72,54,260,30]}
+{"kind":"textbox","id":"sh/donyd0z6","slide":6,"text":"발표에서 강조할 핵심 구현 파일","textPreview":"발표에서 강조할 핵심 구현 파일","textChars":17,"textLines":1,"bbox":[72,98,820,50]}
+{"kind":"textbox","id":"sh/6psfil0r","slide":6,"text":"backend/app/agents/orchestrator.py","textPreview":"backend/app/agents/orchestrator.py","textChars":34,"textLines":1,"bbox":[96,184,420,26]}
+{"kind":"textbox","id":"sh/val87ed8","slide":6,"text":"입력 의도를 판단하고 message → customer → todo → llm 순서로 위임","textPreview":"입력 의도를 판단하고 message → customer → todo → llm 순서로 위임","textChars":50,"textLines":1,"bbox":[548,184,560,30]}
+{"kind":"textbox","id":"sh/kre1w7mp","slide":6,"text":"backend/app/agents/message_agent.py","textPreview":"backend/app/agents/message_agent.py","textChars":35,"textLines":1,"bbox":[96,250,420,26]}
+{"kind":"textbox","id":"sh/dcbulwva","slide":6,"text":"쪽지 CRUD와 LLM 기반 우선순위 추천 sub-agent","textPreview":"쪽지 CRUD와 LLM 기반 우선순위 추천 sub-agent","textChars":33,"textLines":1,"bbox":[548,250,560,30]}
+{"kind":"textbox","id":"sh/2lszqtcj","slide":6,"text":"backend/app/repository.py","textPreview":"backend/app/repository.py","textChars":25,"textLines":1,"bbox":[96,316,420,26]}
+{"kind":"textbox","id":"sh/v6psfil0","slide":6,"text":"JSON CRUD, 연결 데이터 정리, undo/redo 히스토리 책임","textPreview":"JSON CRUD, 연결 데이터 정리, undo/redo 히스토리 책임","textChars":39,"textLines":1,"bbox":[548,316,560,30]}
+{"kind":"textbox","id":"sh/bq1oryts","slide":6,"text":"backend/app/main.py","textPreview":"backend/app/main.py","textChars":19,"textLines":1,"bbox":[96,382,420,26]}
+{"kind":"textbox","id":"sh/m58z25kb","slide":6,"text":"REST API, agent 직접 호출 API, 설정 팝업 metadata 제공","textPreview":"REST API, agent 직접 호출 API, 설정 팝업 metadata 제공","textChars":44,"textLines":1,"bbox":[548,382,560,30]}
+{"kind":"textbox","id":"sh/twra5gbq","slide":6,"text":"frontend/src/App.jsx","textPreview":"frontend/src/App.jsx","textChars":20,"textLines":1,"bbox":[96,448,420,26]}
+{"kind":"textbox","id":"sh/4byhgn29","slide":6,"text":"대시보드 상태, 모달, 채팅, agent API UI 조율","textPreview":"대시보드 상태, 모달, 채팅, agent API UI 조율","textChars":32,"textLines":1,"bbox":[548,448,560,30]}
+{"kind":"textbox","id":"sh/b2hwfyxo","slide":6,"text":"frontend/src/api.js","textPreview":"frontend/src/api.js","textChars":19,"textLines":1,"bbox":[96,514,420,26]}
+{"kind":"textbox","id":"sh/mhk3q5o7","slide":6,"text":"VITE_API_BASE_URL 기반 API client와 전체 endpoint 호출","textPreview":"VITE_API_BASE_URL 기반 API client와 전체 endpoint 호출","textChars":47,"textLines":1,"bbox":[548,514,560,30]}
+{"kind":"textbox","id":"sh/t83itgfm","slide":6,"text":"Bong에이전트 MVP · 최종 발표","textPreview":"Bong에이전트 MVP · 최종 발표","textChars":20,"textLines":1,"bbox":[72,666,420,24]}
+{"kind":"textbox","id":"sh/4nap4r65","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1148,662,60,28]}
+{"kind":"image","id":"im/2x4nap4r","slide":6,"name":"","alt":"KB logo mark","bbox":[1112,54,84,54]}
+{"kind":"notes","id":"nt/hhbnaj","slide":6,"text":""}
+{"kind":"slide","id":"sl/nyqi8x","slide":7,"title":"06  Agent 구조","textShapes":15}
+{"kind":"textbox","id":"sh/4zidonyd","slide":7,"text":"06  Agent 구조","textPreview":"06  Agent 구조","textChars":12,"textLines":1,"bbox":[72,54,260,30]}
+{"kind":"textbox","id":"sh/xkf6dcbu","slide":7,"text":"Orchestration + 도메인 sub-agent 구조","textPreview":"Orchestration + 도메인 sub-agent 구조","textChars":32,"textLines":1,"bbox":[72,98,850,50]}
+{"kind":"shape","id":"sh/mlkjm1cf","slide":7,"bbox":[86,190,1028,78]}
+{"kind":"textbox","id":"sh/f6dcbulw","slide":7,"text":"RuleBasedAssistantAgent","textPreview":"RuleBasedAssistantAgent","textChars":23,"textLines":1,"bbox":[116,212,360,34]}
+{"kind":"textbox","id":"sh/4r65wjud","slide":7,"text":"도메인 agent를 순서대로 검사하고, 처리 가능한 첫 agent에 위임","textPreview":"도메인 agent를 순서대로 검사하고, 처리 가능한 첫 agent에 위임","textChars":40,"textLines":1,"bbox":[492,216,560,30]}
+{"kind":"shape","id":"sh/xc3ylc7u","slide":7,"bbox":[86,332,226,150]}
+{"kind":"textbox","id":"sh/m94fu18j","slide":7,"text":"Message Agent","textPreview":"Message Agent","textChars":13,"textLines":1,"bbox":[104,354,190,28]}
+{"kind":"textbox","id":"sh/fu18jqh0","slide":7,"text":"쪽지 조회/등록/삭제\n우선순위 추천 위임","textPreview":"쪽지 조회/등록/삭제 | 우선순위 추천 위임","textChars":22,"textLines":2,"bbox":[104,402,185,56]}
+{"kind":"shape","id":"sh/r65wjudg","slide":7,"bbox":[343,332,226,150]}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":7,"text":"Customer Agent","textPreview":"Customer Agent","textChars":14,"textLines":1,"bbox":[361,354,190,28]}
+{"kind":"textbox","id":"sh/9cvixcze","slide":7,"text":"사후고객 조회/등록/삭제","textPreview":"사후고객 조회/등록/삭제","textChars":13,"textLines":1,"bbox":[361,402,185,56]}
+{"kind":"shape","id":"sh/gr2p8nqx","slide":7,"bbox":[600,332,226,150]}
+{"kind":"textbox","id":"sh/nih4byhg","slide":7,"text":"Todo Agent","textPreview":"Todo Agent","textChars":10,"textLines":1,"bbox":[618,354,190,28]}
+{"kind":"textbox","id":"sh/yxobm58z","slide":7,"text":"할일 생성/수정/삭제","textPreview":"할일 생성/수정/삭제","textChars":11,"textLines":1,"bbox":[618,402,185,56]}
+{"kind":"shape","id":"sh/5o7qpg3e","slide":7,"bbox":[857,332,226,150]}
+{"kind":"textbox","id":"sh/g3ex0nux","slide":7,"text":"LLM Agent","textPreview":"LLM Agent","textChars":9,"textLines":1,"bbox":[875,354,190,28]}
+{"kind":"textbox","id":"sh/rmhk3q5o","slide":7,"text":"업무 명령 외 일반 질문 fallback","textPreview":"업무 명령 외 일반 질문 fallback","textChars":22,"textLines":1,"bbox":[875,402,185,56]}
+{"kind":"textbox","id":"sh/y1kre1w7","slide":7,"text":"설계 포인트: 명령 분류 로직을 한 파일에 몰지 않고 도메인별 책임으로 분리해 확장성을 확보","textPreview":"설계 포인트: 명령 분류 로직을 한 파일에 몰지 않고 도메인별 책임으로 분리해 확장성을 확보","textChars":51,"textLines":1,"bbox":[110,548,980,38]}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":7,"text":"Bong에이전트 MVP · 최종 발표","textPreview":"Bong에이전트 MVP · 최종 발표","textChars":20,"textLines":1,"bbox":[72,666,420,24]}
+{"kind":"textbox","id":"sh/vy90je9c","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1148,662,60,28]}
+{"kind":"image","id":"im/qh0fepkz","slide":7,"name":"","alt":"KB logo mark","bbox":[1112,54,84,54]}
+{"kind":"notes","id":"nt/nyqi8x","slide":7,"text":""}
+{"kind":"slide","id":"sl/cukdvu","slide":8,"title":"07  힘든 점","textShapes":12}
+{"kind":"textbox","id":"sh/f6dcbulw","slide":8,"text":"07  힘든 점","textPreview":"07  힘든 점","textChars":8,"textLines":1,"bbox":[72,54,260,30]}
+{"kind":"textbox","id":"sh/mlkjm1cf","slide":8,"text":"작게 보이지만 실제 구현에서는 경계 설정이 어려웠던 부분","textPreview":"작게 보이지만 실제 구현에서는 경계 설정이 어려웠던 부분","textChars":31,"textLines":1,"bbox":[72,98,980,50]}
+{"kind":"shape","id":"sh/xkf6dcbu","slide":8,"bbox":[88,190,980,72]}
+{"kind":"textbox","id":"sh/4zidonyd","slide":8,"text":"자연어 명령 분류","textPreview":"자연어 명령 분류","textChars":9,"textLines":1,"bbox":[122,208,280,30]}
+{"kind":"textbox","id":"sh/fepkzupw","slide":8,"text":"쪽지/고객/ToDo/일반 질문이 같은 채팅창으로 들어와 라우팅 우선순위가 중요","textPreview":"쪽지/고객/ToDo/일반 질문이 같은 채팅창으로 들어와 라우팅 우선순위가 중요","textChars":43,"textLines":1,"bbox":[430,208,600,32]}
+{"kind":"shape","id":"sh/mtwra5gb","slide":8,"bbox":[88,288,980,72]}
+{"kind":"textbox","id":"sh/xobm58z2","slide":8,"text":"로컬 JSON 동기화","textPreview":"로컬 JSON 동기화","textChars":11,"textLines":1,"bbox":[122,306,280,30]}
+{"kind":"textbox","id":"sh/83itgfml","slide":8,"text":"쪽지·고객을 ToDo로 전환하거나 삭제할 때 연결 상태를 함께 정리해야 함","textPreview":"쪽지·고객을 ToDo로 전환하거나 삭제할 때 연결 상태를 함께 정리해야 함","textChars":41,"textLines":1,"bbox":[430,306,600,32]}
+{"kind":"shape","id":"sh/y90je9cv","slide":8,"bbox":[88,386,980,72]}
+{"kind":"textbox","id":"sh/nuxc3ylc","slide":8,"text":"LLM 결과 안정성","textPreview":"LLM 결과 안정성","textChars":10,"textLines":1,"bbox":[122,404,280,30]}
+{"kind":"textbox","id":"sh/gbq1oryt","slide":8,"text":"우선순위 추천은 JSON 파싱 실패 가능성이 있어 규칙 기반 fallback 필요","textPreview":"우선순위 추천은 JSON 파싱 실패 가능성이 있어 규칙 기반 fallback 필요","textChars":45,"textLines":1,"bbox":[430,404,600,32]}
+{"kind":"shape","id":"sh/5wjudg7a","slide":8,"bbox":[88,484,980,72]}
+{"kind":"textbox","id":"sh/yhgn29gr","slide":8,"text":"UI 위치 변경","textPreview":"UI 위치 변경","textChars":8,"textLines":1,"bbox":[122,502,280,30]}
+{"kind":"textbox","id":"sh/n29gr2p8","slide":8,"text":"대시보드, 좌측 메뉴 팝업, 설정 API 팝업 간 기능 배치가 반복적으로 조정됨","textPreview":"대시보드, 좌측 메뉴 팝업, 설정 API 팝업 간 기능 배치가 반복적으로 조정됨","textChars":44,"textLines":1,"bbox":[430,502,600,32]}
+{"kind":"textbox","id":"sh/gn29gr2p","slide":8,"text":"Bong에이전트 MVP · 최종 발표","textPreview":"Bong에이전트 MVP · 최종 발표","textChars":20,"textLines":1,"bbox":[72,666,420,24]}
+{"kind":"textbox","id":"sh/58z25kb6","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1148,662,60,28]}
+{"kind":"image","id":"im/1kre1w7m","slide":8,"name":"","alt":"KB logo mark","bbox":[1112,54,84,54]}
+{"kind":"notes","id":"nt/cukdvu","slide":8,"text":""}
+{"kind":"slide","id":"sl/19yu8i","slide":9,"title":"08  향후 일정","textShapes":16}
+{"kind":"textbox","id":"sh/cvixczed","slide":9,"text":"08  향후 일정","textPreview":"08  향후 일정","textChars":9,"textLines":1,"bbox":[72,54,260,30]}
+{"kind":"textbox","id":"sh/5gbq1ory","slide":9,"text":"MVP 이후 실제 업무 도구로 가기 위한 단계","textPreview":"MVP 이후 실제 업무 도구로 가기 위한 단계","textChars":25,"textLines":1,"bbox":[72,98,860,50]}
+{"kind":"shape","id":"sh/udg7adsj","slide":9,"bbox":[92,215,230,250]}
+{"kind":"textbox","id":"sh/nyd0z610","slide":9,"text":"1주","textPreview":"1주","textChars":2,"textLines":1,"bbox":[112,238,90,28]}
+{"kind":"textbox","id":"sh/cj6tovah","slide":9,"text":"시연 안정화","textPreview":"시연 안정화","textChars":6,"textLines":1,"bbox":[112,294,180,34]}
+{"kind":"textbox","id":"sh/54zidony","slide":9,"text":"샘플 데이터 정리, 발표 시나리오, 오류 메시지 보강","textPreview":"샘플 데이터 정리, 발표 시나리오, 오류 메시지 보강","textChars":29,"textLines":1,"bbox":[112,358,180,72]}
+{"kind":"shape","id":"sh/u9knih4b","slide":9,"bbox":[352,215,230,250]}
+{"kind":"textbox","id":"sh/judg7ads","slide":9,"text":"2~3주","textPreview":"2~3주","textChars":4,"textLines":1,"bbox":[372,238,90,28]}
+{"kind":"textbox","id":"sh/nyd0z610","slide":9,"text":"Agent 고도화","textPreview":"Agent 고도화","textChars":9,"textLines":1,"bbox":[372,294,180,34]}
+{"kind":"textbox","id":"sh/udg7adsj","slide":9,"text":"의도 분류 평가셋, LangGraph 검토, streaming 응답","textPreview":"의도 분류 평가셋, LangGraph 검토, streaming 응답","textChars":37,"textLines":1,"bbox":[372,358,180,72]}
+{"kind":"shape","id":"sh/54zidony","slide":9,"bbox":[612,215,230,250]}
+{"kind":"textbox","id":"sh/cj6tovah","slide":9,"text":"4~6주","textPreview":"4~6주","textChars":4,"textLines":1,"bbox":[632,238,90,28]}
+{"kind":"textbox","id":"sh/nap4r65w","slide":9,"text":"저장소 전환","textPreview":"저장소 전환","textChars":6,"textLines":1,"bbox":[632,294,180,34]}
+{"kind":"textbox","id":"sh/upwb2hwf","slide":9,"text":"JSON → DB repository, 감사 로그, 검색/필터 확장","textPreview":"JSON → DB repository, 감사 로그, 검색/필터 확장","textChars":37,"textLines":1,"bbox":[632,358,180,72]}
+{"kind":"shape","id":"sh/5gbq1ory","slide":9,"bbox":[872,215,230,250]}
+{"kind":"textbox","id":"sh/cvixczed","slide":9,"text":"이후","textPreview":"이후","textChars":2,"textLines":1,"bbox":[892,238,90,28]}
+{"kind":"textbox","id":"sh/jm1cfa9w","slide":9,"text":"업무 연동","textPreview":"업무 연동","textChars":5,"textLines":1,"bbox":[892,294,180,34]}
+{"kind":"textbox","id":"sh/u18jqh0f","slide":9,"text":"인증/권한, 사내 쪽지/고객 시스템 API 연동, 배포 자동화","textPreview":"인증/권한, 사내 쪽지/고객 시스템 API 연동, 배포 자동화","textChars":34,"textLines":1,"bbox":[892,358,180,72]}
+{"kind":"textbox","id":"sh/25kb6xkf","slide":9,"text":"Bong에이전트 MVP · 최종 발표","textPreview":"Bong에이전트 MVP · 최종 발표","textChars":20,"textLines":1,"bbox":[72,666,420,24]}
+{"kind":"textbox","id":"sh/rqd4vmtw","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1148,662,60,28]}
+{"kind":"image","id":"im/uxc3ylc7","slide":9,"name":"","alt":"KB logo mark","bbox":[1112,54,84,54]}
+{"kind":"notes","id":"nt/19yu8i","slide":9,"text":""}
+{"kind":"slide","id":"sl/inc8iv","slide":10,"title":"발표 데모 포인트","textShapes":5}
+{"kind":"textbox","id":"sh/wjudg7ad","slide":10,"text":"발표 데모 포인트","textPreview":"발표 데모 포인트","textChars":9,"textLines":1,"bbox":[72,146,500,48]}
+{"kind":"textbox","id":"sh/p4r65wju","slide":10,"text":"1. 자연어로 ToDo 등록\n2. 사내쪽지 메뉴에서 등록/삭제 확인\n3. “쪽지 우선순위 설정해줘”로 LLM 추천 실행\n4. 설정 메뉴에서 agent API endpoint 복사","textPreview":"1. 자연어로 ToDo 등록 | 2. 사내쪽지 메뉴에서 등록/삭제 확인 | 3. “쪽지 우선순위 설정해줘”로 LLM 추천 실행 | 4. 설정 메뉴에서 agent API endpoint 복사","textChars":99,"textLines":4,"bbox":[96,238,760,190]}
+{"kind":"shape","id":"sh/i5sneloj","slide":10,"bbox":[88,500,1000,78]}
+{"kind":"textbox","id":"sh/7qpg3ex0","slide":10,"text":"핵심 메시지: 작은 로컬 MVP지만, 업무 데이터와 agent orchestration의 확장 경계를 실험했다.","textPreview":"핵심 메시지: 작은 로컬 MVP지만, 업무 데이터와 agent orchestration의 확장 경계를 실험했다.","textChars":62,"textLines":1,"bbox":[122,526,930,30]}
+{"kind":"textbox","id":"sh/0bi9s36h","slide":10,"text":"Bong에이전트 MVP · 최종 발표","textPreview":"Bong에이전트 MVP · 최종 발표","textChars":20,"textLines":1,"bbox":[72,666,420,24]}
+{"kind":"textbox","id":"sh/pwb2hwfy","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1148,662,60,28]}
+{"kind":"image","id":"im/ed8v6psf","slide":10,"name":"","alt":"KB logo mark","bbox":[72,58,84,54]}
+{"kind":"notes","id":"nt/inc8iv","slide":10,"text":""}

@@ -25,7 +25,7 @@
     "reason": "대출 사후관리 확인",
     "recommended_action": "서류 확인",
     "scheduled_date": "2026-07-07",
-    "priority": "medium",
+    "priority": "low",
     "detail": "소득 증빙 서류 추가 수취 필요",
     "linked_todo_id": null
   }

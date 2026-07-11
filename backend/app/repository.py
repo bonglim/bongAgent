@@ -26,7 +26,7 @@ class JsonRepository:
 
     HISTORY_LIMIT = 30
 
-    def __init__(self, data_dir: Path):
+    def __init__(self, data_dir: Path) -> None:
         """데이터 디렉터리와 쓰기 작업용 lock을 초기화한다.
 
         Args:
@@ -290,6 +290,35 @@ class JsonRepository:
                     self._write_json("messages.json", rows)
                     return InternalMessage(**row)
         return None
+
+    def update_message_priorities(self, priorities: dict[str, str]) -> list[InternalMessage]:
+        """여러 사내쪽지 우선순위를 한 번에 저장하고 변경된 목록을 반환한다.
+
+        Args:
+            priorities: 사내쪽지 id를 key, priority 값을 value로 갖는 mapping.
+
+        Returns:
+            우선순위가 변경된 ``InternalMessage`` 목록.
+        """
+        # LLM 추천 결과를 적용할 때 히스토리는 한 번만 저장해 undo 단위를 유지한다.
+
+        allowed = {"high", "medium", "low"}
+        clean_priorities = {message_id: priority for message_id, priority in priorities.items() if priority in allowed}
+        if not clean_priorities:
+            return []
+        with self._lock:
+            rows = self._read_json("messages.json")
+            changed = False
+            for row in rows:
+                next_priority = clean_priorities.get(row["id"])
+                if next_priority and row.get("priority") != next_priority:
+                    if not changed:
+                        self._save_history("update_message_priorities", "사내쪽지 우선순위 일괄 설정 전")
+                    row["priority"] = next_priority
+                    changed = True
+            if changed:
+                self._write_json("messages.json", rows)
+        return self.list_messages()
 
     def list_customers(self) -> list[AftercareCustomer]:
         """mock 사후관리 고객을 우선순위 순서로 반환한다."""
