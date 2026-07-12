@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, TypedDict
+from typing import Literal, Protocol, TypedDict
 
 try:
     from langgraph.graph import END, START, StateGraph
@@ -30,6 +30,13 @@ class OrchestratorState(TypedDict):
     message: str
     model: LLMModel | None
     response: AssistantCommandResponse | None
+
+
+class InvokableGraph(Protocol):
+    """orchestrator가 의존하는 graph 실행 인터페이스."""
+
+    def invoke(self, state: OrchestratorState) -> OrchestratorState:
+        """state를 받아 node 실행 후 갱신된 state를 반환한다."""
 
 
 class _FallbackCompiledGraph:
@@ -76,7 +83,7 @@ class RuleBasedAssistantAgent:
         result = self.graph.invoke(state)
         return result["response"] or AssistantCommandResponse(intent="chat", reply="")
 
-    def _build_graph(self):
+    def _build_graph(self) -> InvokableGraph:
         """LangGraph ``StateGraph``를 만들고, 미설치 시 fallback graph를 반환한다."""
 
         if StateGraph is None:

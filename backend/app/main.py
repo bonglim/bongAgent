@@ -336,8 +336,8 @@ def delete_todo(todo_id: str, repository: JsonRepository = Depends(get_repositor
     return {"deleted": True, "id": todo_id}
 
 
-@app.get("/api/messages")
-def list_messages(repository: JsonRepository = Depends(get_repository)) -> list:
+@app.get("/api/messages", response_model=list[InternalMessage])
+def list_messages(repository: JsonRepository = Depends(get_repository)) -> list[InternalMessage]:
     """우선순위 순서로 정렬된 mock 사내쪽지 목록을 반환한다."""
     # 우선순위 패널에 표시할 mock 사내쪽지 목록을 반환한다.
 
@@ -374,8 +374,8 @@ def delete_message(message_id: str, repository: JsonRepository = Depends(get_rep
     return {"deleted": True, "id": message_id}
 
 
-@app.get("/api/customers/aftercare")
-def list_aftercare_customers(repository: JsonRepository = Depends(get_repository)) -> list:
+@app.get("/api/customers/aftercare", response_model=list[AftercareCustomer])
+def list_aftercare_customers(repository: JsonRepository = Depends(get_repository)) -> list[AftercareCustomer]:
     """우선순위 순서로 정렬된 mock 사후관리 고객 목록을 반환한다."""
     # 우선순위 패널에 표시할 mock 사후관리 고객 목록을 반환한다.
 
