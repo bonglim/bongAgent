@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from typing import Protocol
 
-from ..models import AssistantCommandResponse, LLMModel
+from ..models import AftercareCustomer, AssistantCommandResponse, InternalMessage, LLMModel
 
 
 def contains_any(message: str, keywords: list[str]) -> bool:
@@ -31,6 +31,8 @@ class AgentContext:
 
     message: str
     model: LLMModel | None = None
+    messages: tuple[InternalMessage, ...] = ()
+    customers: tuple[AftercareCustomer, ...] = ()
 
 
 class DomainAgent(Protocol):

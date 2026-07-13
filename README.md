@@ -65,6 +65,7 @@ backend/
     agents/
       orchestrator.py
         RuleBasedAssistantAgent            # LangGraph 형식 최상위 orchestrator
+        SemanticDomainRouter               # 질문 의미 기반 업무 도메인 분류
       shared.py
         AgentContext                       # agent 간 공유 요청 context
         DomainAgent                        # 도메인 agent Protocol
@@ -82,21 +83,15 @@ backend/
       build_langfuse_tracing()             # 환경설정 기반 선택적 추적 활성화
 ```
 
-`orchestrator.py`는 `OrchestratorState`를 공유 상태로 사용하고, `message`, `customer`, `todo`, `llm` node를 조건부 edge로 연결합니다. Langfuse key가 설정된 경우 `CallbackHandler`를 LangGraph 실행 config에 전달하여 orchestrator와 각 agent node의 실행 흐름을 추적합니다. `langgraph`가 설치되어 있으면 실제 `StateGraph`를 사용하고, 설치 전 로컬 실행 환경에서는 같은 `invoke()` 계약의 fallback graph로 동작합니다.
+`orchestrator.py`는 `OrchestratorState`를 공유 상태로 사용하고, `message`, `customer`, `todo`, `llm` node를 조건부 edge로 연결합니다. `SemanticDomainRouter`가 질문 의미를 기준으로 업무 도메인을 선택하며, LLM 분류가 명확하지 않을 때는 각 agent의 규칙 기반 `can_handle()`을 fallback으로 사용합니다. 사내쪽지 또는 사후관리 고객 도메인으로 분류되면 질문 표현과 관계없이 저장소의 현재 데이터를 `AgentContext`에 주입합니다. Langfuse key가 설정된 경우 `CallbackHandler`를 LangGraph 실행 config에 전달하여 orchestrator와 각 agent node의 실행 흐름을 추적합니다.
 
-라우팅 우선순위:
+라우팅 흐름:
 
-1. `InternalMessageManagementAgent`
-   - `사내쪽지`, `쪽지`, `메시지` 같은 도메인 키워드와 `등록`, `삭제`, `목록` 등의 동작 키워드를 감지합니다.
-   - `JsonRepository.create_message`, `delete_message`, `list_messages`를 호출합니다.
-2. `AftercareCustomerManagementAgent`
-   - `사후고객`, `사후관리`, `고객관리`, `고객` 키워드와 관리 동작을 감지합니다.
-   - `JsonRepository.create_customer`, `delete_customer`, `list_customers`를 호출합니다.
-3. `TodoManagementAgent`
-   - 기존 자연어 ToDo 명령을 처리합니다.
-   - `추가`, `등록`, `할일`, `todo`, `ToDo`는 ToDo 생성으로, `진행중`, `완료`, `변경`은 수정으로, `삭제`, `지워`, `제거`는 삭제로 분류합니다.
-4. `LLMQuestionAnswerAgent`
-   - 위 agent가 처리하지 않는 일반 질문을 선택된 LLM provider로 전달합니다.
+1. `SemanticDomainRouter`가 질문을 `message`, `customer`, `todo`, `general` 중 하나로 분류합니다.
+2. `message`이면 현재 사내쪽지 전체를, `customer`이면 현재 사후관리 고객 전체를 저장소에서 읽어 context에 주입합니다.
+3. 명확한 등록·삭제·우선순위 변경 요청만 데이터를 변경합니다.
+4. 그 외 사내쪽지 및 사후관리 고객 관련 질문은 주입된 데이터만 근거로 자유 질의응답을 수행합니다.
+5. semantic 분류가 실패하면 기존 agent의 규칙 기반 판별을 사용하고, 어느 도메인에도 해당하지 않으면 `LLMQuestionAnswerAgent`가 처리합니다.
 
 예시 흐름:
 
@@ -113,7 +108,9 @@ RuleBasedAssistantAgent.handle()
   ↓
 Langfuse CallbackHandler로 LangGraph 실행 추적
   ↓
-도메인별 agent.can_handle()
+SemanticDomainRouter로 업무 도메인 분류
+  ↓
+message/customer 도메인이면 현재 대시보드 데이터 주입
   ↓
 선택된 agent.handle()
   ↓
@@ -252,6 +249,7 @@ npm run dev
 - ToDo CRUD: 생성, 수정, 삭제, 상세 모달
 - 사내쪽지 mock list: 우선순위 정렬 및 ToDo 전환
 - 사후관리 고객 mock list: 우선순위 정렬 및 ToDo 전환
+- 사후관리 고객 의미 기반 질의응답: 현재 고객 데이터 기반 요약, 검색, 비교, 후속 조치 안내
 - 자연어 명령: ToDo 추가/상태 수정/삭제 규칙 기반 처리
 - LLM 채팅 fallback: ToDo 명령이 아니면 선택한 Gemini/OpenAI 모델 또는 mock LLM provider 응답
 - Langfuse 관측성: LangGraph 실행 흐름과 Gemini/OpenAI generation 추적

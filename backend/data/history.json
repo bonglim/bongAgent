@@ -1,401 +1,5 @@
 [
   {
-    "id": "history_d2aba19d5e",
-    "created_at": "2026-07-09T08:50:21.115078",
-    "action": "update_todo",
-    "summary": "'GenAI 2.0 기술협상 참여 요청' ToDo 수정 전",
-    "state": {
-      "todos": [
-        {
-          "id": "todo_seed_002",
-          "title": "오전 WM 회의 자료 확인",
-          "description": "지점장 공유용 핵심 고객 관리 현황 점검",
-          "status": "done",
-          "priority": "medium",
-          "due_date": "2026-07-09",
-          "source": "manual",
-          "linked_type": null,
-          "linked_id": null,
-          "created_at": "2026-07-06T09:10:00",
-          "updated_at": "2026-07-09T08:30:57.185228"
-        },
-        {
-          "id": "todo_seed_003",
-          "title": "내부 공지 확인 완료",
-          "description": "영업점 운영 기준 변경 공지 확인",
-          "status": "done",
-          "priority": "low",
-          "due_date": "오늘",
-          "source": "message",
-          "linked_type": "message",
-          "linked_id": "message_003",
-          "created_at": "2026-07-06T08:40:00",
-          "updated_at": "2026-07-06T10:00:00"
-        },
-        {
-          "title": "오후 3시에 김민수 고객 전화",
-          "description": "자연어 명령에서 생성됨: 오늘 오후 3시에 김민수 고객 전화 추가해줘",
-          "status": "doing",
-          "priority": "high",
-          "due_date": "오늘 오후 3시",
-          "source": "assistant",
-          "linked_type": null,
-          "linked_id": null,
-          "id": "todo_1a4d25b7",
-          "created_at": "2026-07-07T12:47:55.782497",
-          "updated_at": "2026-07-08T13:03:46.423551"
-        },
-        {
-          "title": "혁금신청하기",
-          "description": "",
-          "status": "doing",
-          "priority": "low",
-          "due_date": "오늘",
-          "source": "manual",
-          "linked_type": null,
-          "linked_id": null,
-          "id": "todo_48ee3585",
-          "created_at": "2026-07-08T13:04:05.662309",
-          "updated_at": "2026-07-09T07:41:40.228508"
-        },
-        {
-          "title": "정보보호부연락 3시",
-          "description": "자연어 명령에서 생성됨: 정보보호부연락 3시 등록",
-          "status": "todo",
-          "priority": "medium",
-          "due_date": "3시",
-          "source": "assistant",
-          "linked_type": null,
-          "linked_id": null,
-          "id": "todo_104775c0",
-          "created_at": "2026-07-08T13:04:33.232599",
-          "updated_at": "2026-07-08T13:04:33.232599"
-        },
-        {
-          "title": "이영희 고객 상담 예약",
-          "description": "펀드 리밸런싱 상담 필요 - 최근 시장 변동성 확대에 따른 포트폴리오 점검",
-          "status": "done",
-          "priority": "high",
-          "due_date": "2026-07-06",
-          "source": "customer",
-          "linked_type": "customer",
-          "linked_id": "customer_002",
-          "id": "todo_5fbc7fa7",
-          "created_at": "2026-07-08T13:05:06.278341",
-          "updated_at": "2026-07-08T13:05:10.147463"
-        },
-        {
-          "title": "오후 3시에 김민수 고객 전화",
-          "description": "자연어 명령에서 생성됨: 오늘 오후 3시에 김민수 고객 전화 추가해줘",
-          "status": "todo",
-          "priority": "high",
-          "due_date": "2026-07-09",
-          "source": "assistant",
-          "linked_type": null,
-          "linked_id": null,
-          "id": "todo_0e0aa82c",
-          "created_at": "2026-07-09T08:34:26.337317",
-          "updated_at": "2026-07-09T08:34:44.834287"
-        },
-        {
-          "title": "GenAI 2.0 기술협상 참여 요청",
-          "description": "에이전트 기술협상을 위해 참석 바랍니다. 관련 자료는 첨부파일을 확인해 주세요.",
-          "status": "doing",
-          "priority": "high",
-          "due_date": "2026-07-07",
-          "source": "message",
-          "linked_type": "message",
-          "linked_id": "message_004",
-          "id": "todo_f459ad07",
-          "created_at": "2026-07-09T08:50:00.886390",
-          "updated_at": "2026-07-09T08:50:09.581423"
-        }
-      ],
-      "messages": [
-        {
-          "id": "message_001",
-          "title": "고액 이체 사전 확인 요청",
-          "sender": "영업지원부",
-          "received_at": "2026-07-06",
-          "priority": "medium",
-          "status": "unread",
-          "body": "금일 고액 이체 예정 고객의 사전 확인 절차를 완료해 주세요.",
-          "linked_todo_id": null
-        },
-        {
-          "id": "message_002",
-          "title": "VIP 고객 상담 일정 조율",
-          "sender": "PB센터",
-          "received_at": "2026-07-06",
-          "priority": "low",
-          "status": "unread",
-          "body": "VIP 고객 상담 희망 시간을 확인하고 일정 회신이 필요합니다.",
-          "linked_todo_id": null
-        },
-        {
-          "id": "message_003",
-          "title": "영업점 운영 기준 변경 공지",
-          "sender": "준법감시부",
-          "received_at": "2026-07-05",
-          "priority": "high",
-          "status": "unread",
-          "body": "영업점 운영 기준 변경 내용을 확인해 주세요.",
-          "linked_todo_id": null
-        },
-        {
-          "id": "message_004",
-          "title": "GenAI 2.0 기술협상 참여 요청",
-          "sender": "금융AI2센터",
-          "received_at": "2026-07-07",
-          "priority": "high",
-          "status": "todo_linked",
-          "body": "에이전트 기술협상을 위해 참석 바랍니다. 관련 자료는 첨부파일을 확인해 주세요.",
-          "linked_todo_id": "todo_f459ad07"
-        },
-        {
-          "id": "message_005",
-          "title": "상반기 경영성과 보고서 제출 요청",
-          "sender": "재무기획부",
-          "received_at": "2026-07-09",
-          "priority": "high",
-          "status": "unread",
-          "body": "상반기 경영성과 보고서를 제출해 주세요.",
-          "linked_todo_id": null
-        }
-      ],
-      "customers": [
-        {
-          "id": "customer_001",
-          "name": "김민수",
-          "reason": "정기예금 만기 임박",
-          "recommended_action": "만기 안내 전화",
-          "scheduled_date": "2026-07-06",
-          "priority": "medium",
-          "detail": "만기 후 재예치 또는 대체 상품 상담 필요",
-          "linked_todo_id": null
-        },
-        {
-          "id": "customer_002",
-          "name": "이영희",
-          "reason": "펀드 리밸런싱 상담 필요",
-          "recommended_action": "상담 예약",
-          "scheduled_date": "2026-07-06",
-          "priority": "high",
-          "detail": "최근 시장 변동성 확대에 따른 포트폴리오 점검",
-          "linked_todo_id": "todo_5fbc7fa7"
-        },
-        {
-          "id": "customer_003",
-          "name": "박준호",
-          "reason": "대출 사후관리 확인",
-          "recommended_action": "서류 확인",
-          "scheduled_date": "2026-07-07",
-          "priority": "medium",
-          "detail": "소득 증빙 서류 추가 수취 필요",
-          "linked_todo_id": null
-        }
-      ]
-    }
-  },
-  {
-    "id": "history_080cf18ff8",
-    "created_at": "2026-07-09T21:14:36.861368",
-    "action": "delete_todo",
-    "summary": "'GenAI 2.0 기술협상 참여 요청' ToDo 삭제 전",
-    "state": {
-      "todos": [
-        {
-          "id": "todo_seed_002",
-          "title": "오전 WM 회의 자료 확인",
-          "description": "지점장 공유용 핵심 고객 관리 현황 점검",
-          "status": "done",
-          "priority": "medium",
-          "due_date": "2026-07-09",
-          "source": "manual",
-          "linked_type": null,
-          "linked_id": null,
-          "created_at": "2026-07-06T09:10:00",
-          "updated_at": "2026-07-09T08:30:57.185228"
-        },
-        {
-          "id": "todo_seed_003",
-          "title": "내부 공지 확인 완료",
-          "description": "영업점 운영 기준 변경 공지 확인",
-          "status": "done",
-          "priority": "low",
-          "due_date": "오늘",
-          "source": "message",
-          "linked_type": "message",
-          "linked_id": "message_003",
-          "created_at": "2026-07-06T08:40:00",
-          "updated_at": "2026-07-06T10:00:00"
-        },
-        {
-          "title": "오후 3시에 김민수 고객 전화",
-          "description": "자연어 명령에서 생성됨: 오늘 오후 3시에 김민수 고객 전화 추가해줘",
-          "status": "doing",
-          "priority": "high",
-          "due_date": "오늘 오후 3시",
-          "source": "assistant",
-          "linked_type": null,
-          "linked_id": null,
-          "id": "todo_1a4d25b7",
-          "created_at": "2026-07-07T12:47:55.782497",
-          "updated_at": "2026-07-08T13:03:46.423551"
-        },
-        {
-          "title": "혁금신청하기",
-          "description": "",
-          "status": "doing",
-          "priority": "low",
-          "due_date": "오늘",
-          "source": "manual",
-          "linked_type": null,
-          "linked_id": null,
-          "id": "todo_48ee3585",
-          "created_at": "2026-07-08T13:04:05.662309",
-          "updated_at": "2026-07-09T07:41:40.228508"
-        },
-        {
-          "title": "정보보호부연락 3시",
-          "description": "자연어 명령에서 생성됨: 정보보호부연락 3시 등록",
-          "status": "todo",
-          "priority": "medium",
-          "due_date": "3시",
-          "source": "assistant",
-          "linked_type": null,
-          "linked_id": null,
-          "id": "todo_104775c0",
-          "created_at": "2026-07-08T13:04:33.232599",
-          "updated_at": "2026-07-08T13:04:33.232599"
-        },
-        {
-          "title": "이영희 고객 상담 예약",
-          "description": "펀드 리밸런싱 상담 필요 - 최근 시장 변동성 확대에 따른 포트폴리오 점검",
-          "status": "done",
-          "priority": "high",
-          "due_date": "2026-07-06",
-          "source": "customer",
-          "linked_type": "customer",
-          "linked_id": "customer_002",
-          "id": "todo_5fbc7fa7",
-          "created_at": "2026-07-08T13:05:06.278341",
-          "updated_at": "2026-07-08T13:05:10.147463"
-        },
-        {
-          "title": "오후 3시에 김민수 고객 전화",
-          "description": "자연어 명령에서 생성됨: 오늘 오후 3시에 김민수 고객 전화 추가해줘",
-          "status": "todo",
-          "priority": "high",
-          "due_date": "2026-07-09",
-          "source": "assistant",
-          "linked_type": null,
-          "linked_id": null,
-          "id": "todo_0e0aa82c",
-          "created_at": "2026-07-09T08:34:26.337317",
-          "updated_at": "2026-07-09T08:34:44.834287"
-        },
-        {
-          "title": "GenAI 2.0 기술협상 참여 요청",
-          "description": "에이전트 기술협상을 위해 참석 바랍니다. 관련 자료는 첨부파일을 확인해 주세요.",
-          "status": "todo",
-          "priority": "high",
-          "due_date": "2026-07-07",
-          "source": "message",
-          "linked_type": "message",
-          "linked_id": "message_004",
-          "id": "todo_f459ad07",
-          "created_at": "2026-07-09T08:50:00.886390",
-          "updated_at": "2026-07-09T08:50:21.116613"
-        }
-      ],
-      "messages": [
-        {
-          "id": "message_001",
-          "title": "고액 이체 사전 확인 요청",
-          "sender": "영업지원부",
-          "received_at": "2026-07-06",
-          "priority": "medium",
-          "status": "unread",
-          "body": "금일 고액 이체 예정 고객의 사전 확인 절차를 완료해 주세요.",
-          "linked_todo_id": null
-        },
-        {
-          "id": "message_002",
-          "title": "VIP 고객 상담 일정 조율",
-          "sender": "PB센터",
-          "received_at": "2026-07-06",
-          "priority": "low",
-          "status": "unread",
-          "body": "VIP 고객 상담 희망 시간을 확인하고 일정 회신이 필요합니다.",
-          "linked_todo_id": null
-        },
-        {
-          "id": "message_003",
-          "title": "영업점 운영 기준 변경 공지",
-          "sender": "준법감시부",
-          "received_at": "2026-07-05",
-          "priority": "high",
-          "status": "unread",
-          "body": "영업점 운영 기준 변경 내용을 확인해 주세요.",
-          "linked_todo_id": null
-        },
-        {
-          "id": "message_004",
-          "title": "GenAI 2.0 기술협상 참여 요청",
-          "sender": "금융AI2센터",
-          "received_at": "2026-07-07",
-          "priority": "high",
-          "status": "todo_linked",
-          "body": "에이전트 기술협상을 위해 참석 바랍니다. 관련 자료는 첨부파일을 확인해 주세요.",
-          "linked_todo_id": "todo_f459ad07"
-        },
-        {
-          "id": "message_005",
-          "title": "상반기 경영성과 보고서 제출 요청",
-          "sender": "재무기획부",
-          "received_at": "2026-07-09",
-          "priority": "high",
-          "status": "unread",
-          "body": "상반기 경영성과 보고서를 제출해 주세요.",
-          "linked_todo_id": null
-        }
-      ],
-      "customers": [
-        {
-          "id": "customer_001",
-          "name": "김민수",
-          "reason": "정기예금 만기 임박",
-          "recommended_action": "만기 안내 전화",
-          "scheduled_date": "2026-07-06",
-          "priority": "medium",
-          "detail": "만기 후 재예치 또는 대체 상품 상담 필요",
-          "linked_todo_id": null
-        },
-        {
-          "id": "customer_002",
-          "name": "이영희",
-          "reason": "펀드 리밸런싱 상담 필요",
-          "recommended_action": "상담 예약",
-          "scheduled_date": "2026-07-06",
-          "priority": "high",
-          "detail": "최근 시장 변동성 확대에 따른 포트폴리오 점검",
-          "linked_todo_id": "todo_5fbc7fa7"
-        },
-        {
-          "id": "customer_003",
-          "name": "박준호",
-          "reason": "대출 사후관리 확인",
-          "recommended_action": "서류 확인",
-          "scheduled_date": "2026-07-07",
-          "priority": "medium",
-          "detail": "소득 증빙 서류 추가 수취 필요",
-          "linked_todo_id": null
-        }
-      ]
-    }
-  },
-  {
     "id": "history_52a7f3a7cc",
     "created_at": "2026-07-09T21:14:48.946460",
     "action": "create_from_message",
@@ -6306,6 +5910,474 @@
           "id": "todo_ac4b1729",
           "created_at": "2026-07-09T21:14:48.950016",
           "updated_at": "2026-07-09T21:15:00.247549"
+        },
+        {
+          "title": "오후 3시에 김민수 고객 전화",
+          "description": "자연어 명령에서 생성됨: 오늘 오후 3시에 김민수 고객 전화 추가해줘",
+          "status": "todo",
+          "priority": "high",
+          "due_date": "오늘 오후 3시",
+          "source": "assistant",
+          "linked_type": null,
+          "linked_id": null,
+          "id": "todo_7d90a206",
+          "created_at": "2026-07-11T08:56:49.464914",
+          "updated_at": "2026-07-11T08:56:49.464914"
+        },
+        {
+          "title": "상반기 경영성과 보고서 제출 요청",
+          "description": "상반기 경영성과 보고서를 제출해 주세요.",
+          "status": "todo",
+          "priority": "high",
+          "due_date": "2026-07-09",
+          "source": "message",
+          "linked_type": "message",
+          "linked_id": "message_005",
+          "id": "todo_21b98971",
+          "created_at": "2026-07-11T09:02:06.365978",
+          "updated_at": "2026-07-11T09:02:06.365978"
+        },
+        {
+          "title": "오후 3시에 김민수 고객 전화",
+          "description": "자연어 명령에서 생성됨: 오늘 오후 3시에 김민수 고객 전화 추가해줘",
+          "status": "todo",
+          "priority": "high",
+          "due_date": "오늘 오후 3시",
+          "source": "assistant",
+          "linked_type": null,
+          "linked_id": null,
+          "id": "todo_789f9f3b",
+          "created_at": "2026-07-11T09:06:00.218137",
+          "updated_at": "2026-07-11T09:06:00.218137"
+        }
+      ],
+      "messages": [
+        {
+          "id": "message_001",
+          "title": "고액 이체 사전 확인 요청",
+          "sender": "영업지원부",
+          "received_at": "2026-07-06",
+          "priority": "medium",
+          "status": "unread",
+          "body": "금일 고액 이체 예정 고객의 사전 확인 절차를 완료해 주세요.",
+          "linked_todo_id": null
+        },
+        {
+          "id": "message_002",
+          "title": "VIP 고객 상담 일정 조율",
+          "sender": "PB센터",
+          "received_at": "2026-07-06",
+          "priority": "low",
+          "status": "unread",
+          "body": "VIP 고객 상담 희망 시간을 확인하고 일정 회신이 필요합니다.",
+          "linked_todo_id": null
+        },
+        {
+          "id": "message_003",
+          "title": "영업점 운영 기준 변경 공지",
+          "sender": "준법감시부",
+          "received_at": "2026-07-05",
+          "priority": "medium",
+          "status": "unread",
+          "body": "영업점 운영 기준 변경 내용을 확인해 주세요.",
+          "linked_todo_id": null
+        },
+        {
+          "id": "message_004",
+          "title": "GenAI 2.0 기술협상 참여 요청",
+          "sender": "금융AI2센터",
+          "received_at": "2026-07-07",
+          "priority": "medium",
+          "status": "todo_linked",
+          "body": "에이전트 기술협상을 위해 참석 바랍니다. 관련 자료는 첨부파일을 확인해 주세요.",
+          "linked_todo_id": "todo_ac4b1729"
+        },
+        {
+          "id": "message_005",
+          "title": "상반기 경영성과 보고서 제출 요청",
+          "sender": "재무기획부",
+          "received_at": "2026-07-09",
+          "priority": "high",
+          "status": "todo_linked",
+          "body": "상반기 경영성과 보고서를 제출해 주세요.",
+          "linked_todo_id": "todo_21b98971"
+        },
+        {
+          "id": "message_056995c3",
+          "title": "사내쪽지 테스트",
+          "sender": "11",
+          "received_at": "2026-07-11",
+          "priority": "medium",
+          "status": "unread",
+          "body": "11",
+          "linked_todo_id": null
+        }
+      ],
+      "customers": [
+        {
+          "id": "customer_001",
+          "name": "김민수",
+          "reason": "정기예금 만기 임박",
+          "recommended_action": "만기 안내 전화",
+          "scheduled_date": "2026-07-06",
+          "priority": "medium",
+          "detail": "만기 후 재예치 또는 대체 상품 상담 필요",
+          "linked_todo_id": null
+        },
+        {
+          "id": "customer_002",
+          "name": "이영희",
+          "reason": "펀드 리밸런싱 상담 필요",
+          "recommended_action": "상담 예약",
+          "scheduled_date": "2026-07-06",
+          "priority": "high",
+          "detail": "최근 시장 변동성 확대에 따른 포트폴리오 점검",
+          "linked_todo_id": "todo_5fbc7fa7"
+        },
+        {
+          "id": "customer_003",
+          "name": "박준호",
+          "reason": "대출 사후관리 확인",
+          "recommended_action": "서류 확인",
+          "scheduled_date": "2026-07-07",
+          "priority": "low",
+          "detail": "소득 증빙 서류 추가 수취 필요",
+          "linked_todo_id": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "history_341a2912a4",
+    "created_at": "2026-07-13T12:15:29.311309",
+    "action": "update_todo",
+    "summary": "'오후 3시에 김민수 고객 전화' ToDo 수정 전",
+    "state": {
+      "todos": [
+        {
+          "id": "todo_seed_002",
+          "title": "오전 WM 회의 자료 확인",
+          "description": "지점장 공유용 핵심 고객 관리 현황 점검",
+          "status": "done",
+          "priority": "medium",
+          "due_date": "2026-07-09",
+          "source": "manual",
+          "linked_type": null,
+          "linked_id": null,
+          "created_at": "2026-07-06T09:10:00",
+          "updated_at": "2026-07-09T08:30:57.185228"
+        },
+        {
+          "id": "todo_seed_003",
+          "title": "내부 공지 확인 완료",
+          "description": "영업점 운영 기준 변경 공지 확인",
+          "status": "done",
+          "priority": "low",
+          "due_date": "오늘",
+          "source": "message",
+          "linked_type": "message",
+          "linked_id": "message_003",
+          "created_at": "2026-07-06T08:40:00",
+          "updated_at": "2026-07-06T10:00:00"
+        },
+        {
+          "title": "오후 3시에 김민수 고객 전화",
+          "description": "자연어 명령에서 생성됨: 오늘 오후 3시에 김민수 고객 전화 추가해줘",
+          "status": "doing",
+          "priority": "high",
+          "due_date": "오늘 오후 3시",
+          "source": "assistant",
+          "linked_type": null,
+          "linked_id": null,
+          "id": "todo_1a4d25b7",
+          "created_at": "2026-07-07T12:47:55.782497",
+          "updated_at": "2026-07-11T08:56:20.874357"
+        },
+        {
+          "title": "혁금신청하기",
+          "description": "",
+          "status": "doing",
+          "priority": "low",
+          "due_date": "오늘",
+          "source": "manual",
+          "linked_type": null,
+          "linked_id": null,
+          "id": "todo_48ee3585",
+          "created_at": "2026-07-08T13:04:05.662309",
+          "updated_at": "2026-07-09T07:41:40.228508"
+        },
+        {
+          "title": "정보보호부연락 3시",
+          "description": "자연어 명령에서 생성됨: 정보보호부연락 3시 등록",
+          "status": "todo",
+          "priority": "medium",
+          "due_date": "3시",
+          "source": "assistant",
+          "linked_type": null,
+          "linked_id": null,
+          "id": "todo_104775c0",
+          "created_at": "2026-07-08T13:04:33.232599",
+          "updated_at": "2026-07-11T08:56:24.610106"
+        },
+        {
+          "title": "이영희 고객 상담 예약",
+          "description": "펀드 리밸런싱 상담 필요 - 최근 시장 변동성 확대에 따른 포트폴리오 점검",
+          "status": "done",
+          "priority": "high",
+          "due_date": "2026-07-06",
+          "source": "customer",
+          "linked_type": "customer",
+          "linked_id": "customer_002",
+          "id": "todo_5fbc7fa7",
+          "created_at": "2026-07-08T13:05:06.278341",
+          "updated_at": "2026-07-08T13:05:10.147463"
+        },
+        {
+          "title": "GenAI 2.0 기술협상 참여 요청",
+          "description": "에이전트 기술협상을 위해 참석 바랍니다. 관련 자료는 첨부파일을 확인해 주세요.",
+          "status": "done",
+          "priority": "medium",
+          "due_date": "2026-07-07",
+          "source": "message",
+          "linked_type": "message",
+          "linked_id": "message_004",
+          "id": "todo_ac4b1729",
+          "created_at": "2026-07-09T21:14:48.950016",
+          "updated_at": "2026-07-11T14:11:49.725869"
+        },
+        {
+          "title": "오후 3시에 김민수 고객 전화",
+          "description": "자연어 명령에서 생성됨: 오늘 오후 3시에 김민수 고객 전화 추가해줘",
+          "status": "todo",
+          "priority": "high",
+          "due_date": "오늘 오후 3시",
+          "source": "assistant",
+          "linked_type": null,
+          "linked_id": null,
+          "id": "todo_7d90a206",
+          "created_at": "2026-07-11T08:56:49.464914",
+          "updated_at": "2026-07-11T08:56:49.464914"
+        },
+        {
+          "title": "상반기 경영성과 보고서 제출 요청",
+          "description": "상반기 경영성과 보고서를 제출해 주세요.",
+          "status": "todo",
+          "priority": "high",
+          "due_date": "2026-07-09",
+          "source": "message",
+          "linked_type": "message",
+          "linked_id": "message_005",
+          "id": "todo_21b98971",
+          "created_at": "2026-07-11T09:02:06.365978",
+          "updated_at": "2026-07-11T09:02:06.365978"
+        },
+        {
+          "title": "오후 3시에 김민수 고객 전화",
+          "description": "자연어 명령에서 생성됨: 오늘 오후 3시에 김민수 고객 전화 추가해줘",
+          "status": "todo",
+          "priority": "high",
+          "due_date": "오늘 오후 3시",
+          "source": "assistant",
+          "linked_type": null,
+          "linked_id": null,
+          "id": "todo_789f9f3b",
+          "created_at": "2026-07-11T09:06:00.218137",
+          "updated_at": "2026-07-11T09:06:00.218137"
+        }
+      ],
+      "messages": [
+        {
+          "id": "message_001",
+          "title": "고액 이체 사전 확인 요청",
+          "sender": "영업지원부",
+          "received_at": "2026-07-06",
+          "priority": "medium",
+          "status": "unread",
+          "body": "금일 고액 이체 예정 고객의 사전 확인 절차를 완료해 주세요.",
+          "linked_todo_id": null
+        },
+        {
+          "id": "message_002",
+          "title": "VIP 고객 상담 일정 조율",
+          "sender": "PB센터",
+          "received_at": "2026-07-06",
+          "priority": "low",
+          "status": "unread",
+          "body": "VIP 고객 상담 희망 시간을 확인하고 일정 회신이 필요합니다.",
+          "linked_todo_id": null
+        },
+        {
+          "id": "message_003",
+          "title": "영업점 운영 기준 변경 공지",
+          "sender": "준법감시부",
+          "received_at": "2026-07-05",
+          "priority": "medium",
+          "status": "unread",
+          "body": "영업점 운영 기준 변경 내용을 확인해 주세요.",
+          "linked_todo_id": null
+        },
+        {
+          "id": "message_004",
+          "title": "GenAI 2.0 기술협상 참여 요청",
+          "sender": "금융AI2센터",
+          "received_at": "2026-07-07",
+          "priority": "medium",
+          "status": "todo_linked",
+          "body": "에이전트 기술협상을 위해 참석 바랍니다. 관련 자료는 첨부파일을 확인해 주세요.",
+          "linked_todo_id": "todo_ac4b1729"
+        },
+        {
+          "id": "message_005",
+          "title": "상반기 경영성과 보고서 제출 요청",
+          "sender": "재무기획부",
+          "received_at": "2026-07-09",
+          "priority": "high",
+          "status": "todo_linked",
+          "body": "상반기 경영성과 보고서를 제출해 주세요.",
+          "linked_todo_id": "todo_21b98971"
+        },
+        {
+          "id": "message_056995c3",
+          "title": "사내쪽지 테스트",
+          "sender": "11",
+          "received_at": "2026-07-11",
+          "priority": "medium",
+          "status": "unread",
+          "body": "11",
+          "linked_todo_id": null
+        }
+      ],
+      "customers": [
+        {
+          "id": "customer_001",
+          "name": "김민수",
+          "reason": "정기예금 만기 임박",
+          "recommended_action": "만기 안내 전화",
+          "scheduled_date": "2026-07-06",
+          "priority": "medium",
+          "detail": "만기 후 재예치 또는 대체 상품 상담 필요",
+          "linked_todo_id": null
+        },
+        {
+          "id": "customer_002",
+          "name": "이영희",
+          "reason": "펀드 리밸런싱 상담 필요",
+          "recommended_action": "상담 예약",
+          "scheduled_date": "2026-07-06",
+          "priority": "high",
+          "detail": "최근 시장 변동성 확대에 따른 포트폴리오 점검",
+          "linked_todo_id": "todo_5fbc7fa7"
+        },
+        {
+          "id": "customer_003",
+          "name": "박준호",
+          "reason": "대출 사후관리 확인",
+          "recommended_action": "서류 확인",
+          "scheduled_date": "2026-07-07",
+          "priority": "low",
+          "detail": "소득 증빙 서류 추가 수취 필요",
+          "linked_todo_id": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "history_eef44c2029",
+    "created_at": "2026-07-13T12:29:04.431959",
+    "action": "create_customer",
+    "summary": "'요약' 고객 등록 전",
+    "state": {
+      "todos": [
+        {
+          "id": "todo_seed_002",
+          "title": "오전 WM 회의 자료 확인",
+          "description": "지점장 공유용 핵심 고객 관리 현황 점검",
+          "status": "done",
+          "priority": "medium",
+          "due_date": "2026-07-09",
+          "source": "manual",
+          "linked_type": null,
+          "linked_id": null,
+          "created_at": "2026-07-06T09:10:00",
+          "updated_at": "2026-07-09T08:30:57.185228"
+        },
+        {
+          "id": "todo_seed_003",
+          "title": "내부 공지 확인 완료",
+          "description": "영업점 운영 기준 변경 공지 확인",
+          "status": "done",
+          "priority": "low",
+          "due_date": "오늘",
+          "source": "message",
+          "linked_type": "message",
+          "linked_id": "message_003",
+          "created_at": "2026-07-06T08:40:00",
+          "updated_at": "2026-07-06T10:00:00"
+        },
+        {
+          "title": "오후 3시에 김민수 고객 전화",
+          "description": "자연어 명령에서 생성됨: 오늘 오후 3시에 김민수 고객 전화 추가해줘",
+          "status": "doing",
+          "priority": "high",
+          "due_date": "오늘 오후 3시",
+          "source": "assistant",
+          "linked_type": null,
+          "linked_id": null,
+          "id": "todo_1a4d25b7",
+          "created_at": "2026-07-07T12:47:55.782497",
+          "updated_at": "2026-07-13T12:15:29.314463"
+        },
+        {
+          "title": "혁금신청하기",
+          "description": "",
+          "status": "doing",
+          "priority": "low",
+          "due_date": "오늘",
+          "source": "manual",
+          "linked_type": null,
+          "linked_id": null,
+          "id": "todo_48ee3585",
+          "created_at": "2026-07-08T13:04:05.662309",
+          "updated_at": "2026-07-09T07:41:40.228508"
+        },
+        {
+          "title": "정보보호부연락 3시",
+          "description": "자연어 명령에서 생성됨: 정보보호부연락 3시 등록",
+          "status": "todo",
+          "priority": "medium",
+          "due_date": "3시",
+          "source": "assistant",
+          "linked_type": null,
+          "linked_id": null,
+          "id": "todo_104775c0",
+          "created_at": "2026-07-08T13:04:33.232599",
+          "updated_at": "2026-07-11T08:56:24.610106"
+        },
+        {
+          "title": "이영희 고객 상담 예약",
+          "description": "펀드 리밸런싱 상담 필요 - 최근 시장 변동성 확대에 따른 포트폴리오 점검",
+          "status": "done",
+          "priority": "high",
+          "due_date": "2026-07-06",
+          "source": "customer",
+          "linked_type": "customer",
+          "linked_id": "customer_002",
+          "id": "todo_5fbc7fa7",
+          "created_at": "2026-07-08T13:05:06.278341",
+          "updated_at": "2026-07-08T13:05:10.147463"
+        },
+        {
+          "title": "GenAI 2.0 기술협상 참여 요청",
+          "description": "에이전트 기술협상을 위해 참석 바랍니다. 관련 자료는 첨부파일을 확인해 주세요.",
+          "status": "done",
+          "priority": "medium",
+          "due_date": "2026-07-07",
+          "source": "message",
+          "linked_type": "message",
+          "linked_id": "message_004",
+          "id": "todo_ac4b1729",
+          "created_at": "2026-07-09T21:14:48.950016",
+          "updated_at": "2026-07-11T14:11:49.725869"
         },
         {
           "title": "오후 3시에 김민수 고객 전화",

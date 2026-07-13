@@ -28,5 +28,15 @@
     "priority": "low",
     "detail": "소득 증빙 서류 추가 수취 필요",
     "linked_todo_id": null
+  },
+  {
+    "id": "customer_dede210d",
+    "name": "요약",
+    "reason": "사후관리 필요",
+    "recommended_action": "상담 및 후속 확인",
+    "scheduled_date": "오늘",
+    "priority": "medium",
+    "detail": "사후관리고객 요약해줘.",
+    "linked_todo_id": null
   }
 ]

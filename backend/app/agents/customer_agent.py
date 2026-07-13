@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
+import json
 import re
 
+from ..llm_provider import LLMProvider
 from ..models import AftercareCustomer, AftercareCustomerCreate, AssistantCommandResponse
 from ..repository import JsonRepository
 from .shared import AgentContext, compact_title, contains_any
 
 
 class AftercareCustomerManagementAgent:
-    """채팅에서 사후관리 고객 조회, 등록, 삭제 명령을 처리한다."""
+    """사후관리 고객 변경과 현재 대시보드 데이터 기반 질의응답을 처리한다."""
 
     DOMAIN_WORDS = ["사후고객", "사후관리", "고객관리", "고객"]
+    FALLBACK_DOMAIN_WORDS = ["사후고객", "사후관리", "고객관리"]
     CREATE_WORDS = ["등록", "추가", "생성"]
     DELETE_WORDS = ["삭제", "지워", "제거"]
     LIST_WORDS = ["목록", "조회", "보여", "확인", "찾아", "검색"]
@@ -24,29 +27,95 @@ class AftercareCustomerManagementAgent:
         "low": ["low", "낮음", "낮은", "서류"],
     }
 
-    def __init__(self, repository: JsonRepository) -> None:
-        """사후관리 고객 JSON 저장소 접근 객체를 보관한다."""
+    def __init__(self, repository: JsonRepository, llm_provider: LLMProvider) -> None:
+        """사후관리 고객 저장소와 데이터 질의응답용 LLM provider를 보관한다."""
 
         self.repository = repository
+        self.llm_provider = llm_provider
 
     def can_handle(self, context: AgentContext) -> bool:
-        """고객 도메인 키워드와 관리 동작이 함께 있는지 확인한다."""
+        """semantic router 실패 시 사후관리 도메인의 최소 fallback을 제공한다."""
 
-        message = context.message
-        return contains_any(message, self.DOMAIN_WORDS) and contains_any(
-            message,
-            self.CREATE_WORDS + self.DELETE_WORDS + self.LIST_WORDS + self.DETAIL_WORDS + self.QUESTION_WORDS,
-        )
+        return contains_any(context.message, self.FALLBACK_DOMAIN_WORDS)
 
     def handle(self, context: AgentContext) -> AssistantCommandResponse:
-        """고객 조회, 삭제, 등록 명령을 실행한다."""
+        """명확한 변경 요청만 실행하고 나머지는 주입된 데이터로 답변한다."""
 
         message = context.message
         if contains_any(message, self.DELETE_WORDS):
             return self._delete_customer(message)
-        if contains_any(message, self.LIST_WORDS + self.DETAIL_WORDS + self.QUESTION_WORDS):
-            return self._query_customers(message)
-        return self._create_customer(message)
+        if contains_any(message, self.CREATE_WORDS):
+            return self._create_customer(message)
+        return self._answer_with_customer_data(context)
+
+    def _answer_with_customer_data(self, context: AgentContext) -> AssistantCommandResponse:
+        """질문 유형과 관계없이 현재 사후관리 고객 전체를 사용해 답변한다."""
+
+        customers = list(context.customers) if context.customers else self.repository.list_customers()
+        if not customers:
+            return AssistantCommandResponse(
+                intent="query_customers",
+                reply="현재 대시보드에 등록된 사후관리 고객이 없습니다.",
+                result={"customers": []},
+            )
+
+        prompt = self._build_data_question_prompt(context.message, customers)
+        reply = self.llm_provider.chat(prompt, context.model)
+        if self._should_use_data_fallback(reply):
+            reply = self._format_data_fallback(customers)
+        return AssistantCommandResponse(
+            intent="query_customers",
+            reply=reply,
+            result={"customers": [customer.model_dump(mode="json") for customer in customers]},
+        )
+
+    def _build_data_question_prompt(self, question: str, customers: list[AftercareCustomer]) -> str:
+        """현재 대시보드 고객 데이터만 근거로 자유 질의응답을 수행하는 prompt를 만든다."""
+
+        rows = [
+            {
+                "id": customer.id,
+                "name": customer.name,
+                "reason": customer.reason,
+                "recommended_action": customer.recommended_action,
+                "scheduled_date": customer.scheduled_date,
+                "priority": customer.priority,
+                "detail": customer.detail,
+                "todo_registered": bool(customer.linked_todo_id),
+            }
+            for customer in customers
+        ]
+        return (
+            "당신은 은행 직원의 사후관리 고객 업무를 지원하는 assistant입니다. "
+            "반드시 제공된 현재 대시보드 데이터만 사용하고, 없는 사실은 추측하지 마세요. "
+            "질문의 표현에 맞춰 요약, 검색, 비교, 우선순위 설명 또는 후속 조치를 한국어로 답하세요. "
+            "이 요청은 읽기 전용이므로 어떤 데이터도 변경하지 마세요.\n"
+            f"사용자 질문: {question}\n"
+            f"현재 사후관리 고객 데이터: {json.dumps(rows, ensure_ascii=False)}"
+        )
+
+    def _should_use_data_fallback(self, reply: str) -> bool:
+        """mock 또는 provider 오류 응답이면 결정적 데이터 요약으로 대체한다."""
+
+        return reply.startswith("현재는 mock LLM 모드입니다.") or contains_any(
+            reply,
+            ["API에 연결하지 못했습니다", "API 키가 유효하지", "호출 중 오류가 발생했습니다"],
+        )
+
+    def _format_data_fallback(self, customers: list[AftercareCustomer]) -> str:
+        """LLM을 사용할 수 없어도 실제 대시보드 고객 데이터로 기본 답변을 만든다."""
+
+        high_count = sum(customer.priority == "high" for customer in customers)
+        unlinked_count = sum(not customer.linked_todo_id for customer in customers)
+        rows = [
+            f"{index}. [{customer.priority}] {customer.name} 고객 - {customer.reason} / {customer.scheduled_date}"
+            for index, customer in enumerate(customers[:5], start=1)
+        ]
+        suffix = f"\n외 {len(customers) - 5}명이 더 있습니다." if len(customers) > 5 else ""
+        return (
+            f"현재 사후관리 고객은 총 {len(customers)}명이며, 높은 우선순위 {high_count}명, "
+            f"ToDo 미등록 {unlinked_count}명입니다.\n" + "\n".join(rows) + suffix
+        )
 
     def _create_customer(self, message: str) -> AssistantCommandResponse:
         """채팅 문장을 사후관리 고객 등록 payload로 변환한다."""

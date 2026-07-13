@@ -215,7 +215,7 @@ def _get_agent_by_id(agent_id: str, repository: JsonRepository, settings_obj: Se
         ),
         "message": InternalMessageManagementAgent(repository, llm_provider),
         "message-priority": InternalMessagePriorityRecommendationAgent(repository, llm_provider),
-        "customer": AftercareCustomerManagementAgent(repository),
+        "customer": AftercareCustomerManagementAgent(repository, llm_provider),
         "todo": TodoManagementAgent(repository),
         "llm": LLMQuestionAnswerAgent(llm_provider),
     }

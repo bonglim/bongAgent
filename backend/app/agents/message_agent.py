@@ -12,7 +12,7 @@ from .shared import AgentContext, compact_title, contains_any
 
 
 class InternalMessageManagementAgent:
-    """채팅에서 사내쪽지 조회, 등록, 삭제 명령을 처리한다."""
+    """사내쪽지 변경과 현재 대시보드 데이터 기반 질의응답을 처리한다."""
 
     DOMAIN_WORDS = ["사내쪽지", "쪽지", "메시지", "message"]
     CREATE_WORDS = ["등록", "추가", "생성"]
@@ -32,34 +32,94 @@ class InternalMessageManagementAgent:
         """저장소와 우선순위 추천 sub-agent 의존성을 초기화한다."""
 
         self.repository = repository
+        self.llm_provider = llm_provider
         self.priority_agent = InternalMessagePriorityRecommendationAgent(repository, llm_provider)
 
     def can_handle(self, context: AgentContext) -> bool:
-        """사내쪽지 도메인 키워드와 관리 동작이 함께 있는지 확인한다."""
+        """semantic router 실패 시 사내쪽지 도메인의 최소 fallback을 제공한다."""
 
-        message = context.message
-        return contains_any(message, self.DOMAIN_WORDS) and contains_any(
-            message,
-            self.CREATE_WORDS
-            + self.DELETE_WORDS
-            + self.LIST_WORDS
-            + self.DETAIL_WORDS
-            + self.QUESTION_WORDS
-            + self.PRIORITY_WORDS
-            + self.PRIORITY_ACTION_WORDS,
-        )
+        return contains_any(context.message, self.DOMAIN_WORDS)
 
     def handle(self, context: AgentContext) -> AssistantCommandResponse:
-        """사내쪽지 조회, 삭제, 등록 명령을 실행한다."""
+        """명확한 변경 요청만 실행하고 나머지는 주입된 데이터로 답변한다."""
 
         message = context.message
         if self.priority_agent.can_handle(context):
             return self.priority_agent.handle(context)
         if contains_any(message, self.DELETE_WORDS):
             return self._delete_message(message)
-        if contains_any(message, self.LIST_WORDS + self.DETAIL_WORDS + self.QUESTION_WORDS):
-            return self._query_messages(message)
-        return self._create_message(message)
+        if contains_any(message, self.CREATE_WORDS):
+            return self._create_message(message)
+        return self._answer_with_message_data(context)
+
+    def _answer_with_message_data(self, context: AgentContext) -> AssistantCommandResponse:
+        """질문 유형과 관계없이 현재 사내쪽지 전체를 context로 사용해 답변한다."""
+
+        messages = list(context.messages) if context.messages else self.repository.list_messages()
+        if not messages:
+            return AssistantCommandResponse(
+                intent="query_messages",
+                reply="현재 대시보드에 등록된 사내쪽지가 없습니다.",
+                result={"messages": []},
+            )
+
+        prompt = self._build_data_question_prompt(context.message, messages)
+        reply = self.llm_provider.chat(prompt, context.model)
+        if self._should_use_data_fallback(reply):
+            reply = self._format_data_fallback(messages)
+        return AssistantCommandResponse(
+            intent="query_messages",
+            reply=reply,
+            result={"messages": [message.model_dump(mode="json") for message in messages]},
+        )
+
+    def _build_data_question_prompt(self, question: str, messages: list[InternalMessage]) -> str:
+        """현재 대시보드 데이터만 근거로 자유 질의응답을 수행하는 prompt를 만든다."""
+
+        rows = [
+            {
+                "id": message.id,
+                "title": message.title,
+                "sender": message.sender,
+                "received_at": message.received_at,
+                "priority": message.priority,
+                "status": message.status,
+                "body": message.body,
+                "todo_registered": bool(message.linked_todo_id),
+            }
+            for message in messages
+        ]
+        return (
+            "당신은 은행 직원의 사내쪽지 업무를 지원하는 assistant입니다. "
+            "반드시 제공된 현재 대시보드 데이터만 사용하고, 없는 사실은 추측하지 마세요. "
+            "질문의 표현에 맞춰 요약, 검색, 비교, 우선순위 설명 또는 처리 순서를 한국어로 답하세요. "
+            "이 요청은 읽기 전용이므로 어떤 데이터도 변경하지 마세요.\n"
+            f"사용자 질문: {question}\n"
+            f"현재 사내쪽지 데이터: {json.dumps(rows, ensure_ascii=False)}"
+        )
+
+    def _should_use_data_fallback(self, reply: str) -> bool:
+        """mock 또는 provider 오류 응답이면 결정적 데이터 요약으로 대체한다."""
+
+        return reply.startswith("현재는 mock LLM 모드입니다.") or contains_any(
+            reply,
+            ["API에 연결하지 못했습니다", "API 키가 유효하지", "호출 중 오류가 발생했습니다"],
+        )
+
+    def _format_data_fallback(self, messages: list[InternalMessage]) -> str:
+        """LLM을 사용할 수 없어도 실제 대시보드 데이터로 기본 답변을 만든다."""
+
+        high_count = sum(message.priority == "high" for message in messages)
+        unread_count = sum(message.status == "unread" for message in messages)
+        rows = [
+            f"{index}. [{message.priority}] {message.title} - {message.sender} / {message.received_at}"
+            for index, message in enumerate(messages[:5], start=1)
+        ]
+        suffix = f"\n외 {len(messages) - 5}건이 더 있습니다." if len(messages) > 5 else ""
+        return (
+            f"현재 사내쪽지는 총 {len(messages)}건이며, 높은 우선순위 {high_count}건, "
+            f"미확인 {unread_count}건입니다.\n" + "\n".join(rows) + suffix
+        )
 
     def _create_message(self, message: str) -> AssistantCommandResponse:
         """채팅 문장을 사내쪽지 등록 payload로 변환한다."""

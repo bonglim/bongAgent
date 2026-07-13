@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any, Literal, Protocol, TypedDict
 
 from langfuse.langchain import CallbackHandler
@@ -24,6 +25,39 @@ from .todo_agent import TodoManagementAgent
 
 
 RouteName = Literal["message", "customer", "todo", "llm"]
+
+
+class SemanticDomainRouter:
+    """질문의 의미를 기준으로 업무 agent를 선택하고 규칙 기반 routing을 보조한다."""
+
+    ROUTE_PROMPT = (
+        "사용자 요청을 업무 도메인 하나로 분류하세요. "
+        "message는 사내쪽지와 내부 전달사항, customer는 사후관리 고객, "
+        "todo는 할 일과 업무 상태, general은 그 밖의 일반 질문입니다. "
+        "반드시 message, customer, todo, general 중 한 단어만 답하세요.\n"
+        "사용자 요청: {question}"
+    )
+
+    def __init__(self, llm_provider: LLMProvider) -> None:
+        """의미 분류에 사용할 LLM provider를 보관한다."""
+
+        self.llm_provider = llm_provider
+
+    def route(self, question: str, model: LLMModel | None = None) -> RouteName | None:
+        """LLM이 정확한 단일 route를 반환한 경우에만 semantic 결과를 채택한다."""
+
+        response = self.llm_provider.chat(self.ROUTE_PROMPT.format(question=question), model)
+        match = re.fullmatch(r"[`'\"\s]*(message|customer|todo|general)[`'\"\s.]*", response.lower())
+        if not match:
+            return None
+        route = match.group(1)
+        if route == "message":
+            return "message"
+        if route == "customer":
+            return "customer"
+        if route == "todo":
+            return "todo"
+        return "llm"
 
 
 class OrchestratorState(TypedDict):
@@ -73,8 +107,10 @@ class RuleBasedAssistantAgent:
     ) -> None:
         """API 계층에서 저장소와 LLM provider 의존성을 주입받는다."""
 
+        self.repository = repository
+        self.domain_router = SemanticDomainRouter(llm_provider)
         self.message_agent = InternalMessageManagementAgent(repository, llm_provider)
-        self.customer_agent = AftercareCustomerManagementAgent(repository)
+        self.customer_agent = AftercareCustomerManagementAgent(repository, llm_provider)
         self.todo_agent = TodoManagementAgent(repository)
         self.llm_agent = LLMQuestionAnswerAgent(llm_provider)
         self.langfuse_handler = langfuse_handler
@@ -123,6 +159,9 @@ class RuleBasedAssistantAgent:
         """입력 문장을 처리할 sub-agent node 이름으로 라우팅한다."""
 
         context = self._context(state)
+        semantic_route = self.domain_router.route(context.message, context.model)
+        if semantic_route:
+            return semantic_route
         if self.message_agent.can_handle(context):
             return "message"
         if self.customer_agent.can_handle(context):
@@ -132,14 +171,24 @@ class RuleBasedAssistantAgent:
         return "llm"
 
     def _run_message_agent(self, state: OrchestratorState) -> OrchestratorState:
-        """사내쪽지 agent node를 실행한다."""
+        """현재 사내쪽지 전체를 context에 주입한 뒤 message agent를 실행한다."""
 
-        return {**state, "response": self.message_agent.handle(self._context(state))}
+        context = AgentContext(
+            message=state["message"],
+            model=state["model"],
+            messages=tuple(self.repository.list_messages()),
+        )
+        return {**state, "response": self.message_agent.handle(context)}
 
     def _run_customer_agent(self, state: OrchestratorState) -> OrchestratorState:
-        """사후고객관리 agent node를 실행한다."""
+        """현재 사후관리 고객 전체를 context에 주입한 뒤 customer agent를 실행한다."""
 
-        return {**state, "response": self.customer_agent.handle(self._context(state))}
+        context = AgentContext(
+            message=state["message"],
+            model=state["model"],
+            customers=tuple(self.repository.list_customers()),
+        )
+        return {**state, "response": self.customer_agent.handle(context)}
 
     def _run_todo_agent(self, state: OrchestratorState) -> OrchestratorState:
         """ToDo agent node를 실행한다."""
