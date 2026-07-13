@@ -15,6 +15,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 import certifi
+from langfuse import Langfuse
 
 from .config import Settings
 from .llm_settings import get_default_llm_model, get_llm_model_config, resolve_model_api_key
@@ -48,18 +49,35 @@ class MockLLMProvider(LLMProvider):
 class GeminiProvider(LLMProvider):
     """일반 채팅 fallback 응답을 Gemini로 생성하는 provider."""
 
-    def __init__(self, api_key: str, model: str) -> None:
+    def __init__(self, api_key: str, model: str, langfuse: Langfuse | None = None) -> None:
         """Gemini 채팅 요청에 필요한 설정을 보관한다."""
         # Gemini API 호출에 필요한 API 키와 모델명을 보관한다.
 
         self.api_key = api_key
         self.model = model
+        self.langfuse = langfuse
 
     def chat(self, message: str, model: LLMModel | None = None) -> str:
         """Gemini generateContent REST API를 호출하고 생성된 텍스트를 반환한다."""
         # 일반 채팅 요청을 Gemini REST API로 보내고 사용자 친화적인 결과를 반환한다.
 
         active_model = model or self.model
+        if self.langfuse is None:
+            return self._chat(message, active_model)
+        with self.langfuse.start_as_current_observation(
+            as_type="generation",
+            name="gemini-generate-content",
+            model=str(active_model),
+            input=message,
+            metadata={"provider": "gemini"},
+        ) as generation:
+            output = self._chat(message, active_model)
+            generation.update(output=output)
+            return output
+
+    def _chat(self, message: str, active_model: LLMModel) -> str:
+        """Gemini REST 호출을 수행해 tracing 여부와 무관한 응답 문자열을 만든다."""
+
         payload = {
             "systemInstruction": {
                 "parts": [
@@ -122,15 +140,32 @@ class GeminiProvider(LLMProvider):
 class OpenAIProvider(LLMProvider):
     """일반 채팅 fallback 응답을 OpenAI Responses API로 생성하는 provider."""
 
-    def __init__(self, api_key: str) -> None:
+    def __init__(self, api_key: str, langfuse: Langfuse | None = None) -> None:
         """OpenAI 채팅 요청에 필요한 API key를 보관한다."""
         # OpenAI API 호출에 필요한 API 키를 보관한다.
 
         self.api_key = api_key
+        self.langfuse = langfuse
 
     def chat(self, message: str, model: LLMModel | None = None) -> str:
         """OpenAI Responses API를 호출하고 생성된 텍스트를 반환한다."""
         # 선택된 OpenAI 모델로 일반 채팅 요청을 보내고 사용자 친화적인 결과를 반환한다.
+
+        if self.langfuse is None:
+            return self._chat(message, model)
+        with self.langfuse.start_as_current_observation(
+            as_type="generation",
+            name="openai-responses",
+            model=str(model or "default"),
+            input=message,
+            metadata={"provider": "openai"},
+        ) as generation:
+            output = self._chat(message, model)
+            generation.update(output=output)
+            return output
+
+    def _chat(self, message: str, model: LLMModel | None) -> str:
+        """OpenAI REST 호출을 수행해 tracing 여부와 무관한 응답 문자열을 만든다."""
 
         payload = {
             "model": model,
@@ -188,11 +223,12 @@ class OpenAIProvider(LLMProvider):
 class RoutedLLMProvider(LLMProvider):
     """선택된 모델에 맞는 provider로 각 채팅 요청을 라우팅한다."""
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, langfuse: Langfuse | None = None) -> None:
         """런타임 설정을 사용해 provider 라우팅에 필요한 상태를 준비한다."""
         # 선택 모델별로 사용할 수 있는 실제 provider와 mock fallback을 준비한다.
 
         self.settings = settings
+        self.langfuse = langfuse
         self.mock_provider = MockLLMProvider()
 
     def chat(self, message: str, model: LLMModel | None = None) -> str:
@@ -208,14 +244,16 @@ class RoutedLLMProvider(LLMProvider):
         if not api_key:
             return self.mock_provider.chat(message, model_config.id)
         if model_config.provider in {"gemini", "google"}:
-            return GeminiProvider(api_key, get_default_llm_model(self.settings)).chat(message, model_config.id)
+            return GeminiProvider(api_key, get_default_llm_model(self.settings), self.langfuse).chat(
+                message, model_config.id
+            )
         if model_config.provider == "openai":
-            return OpenAIProvider(api_key).chat(message, model_config.id)
+            return OpenAIProvider(api_key, self.langfuse).chat(message, model_config.id)
         return self.mock_provider.chat(message, model_config.id)
 
 
-def build_llm_provider(settings: Settings) -> LLMProvider:
+def build_llm_provider(settings: Settings, langfuse: Langfuse | None = None) -> LLMProvider:
     """의존성 주입에 사용할 LLM provider를 설정값에 맞춰 생성한다."""
     # 환경 설정과 요청 모델에 따라 실제 provider 또는 mock provider를 선택한다.
 
-    return RoutedLLMProvider(settings)
+    return RoutedLLMProvider(settings, langfuse)

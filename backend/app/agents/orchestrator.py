@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Literal, Protocol, TypedDict
+from typing import Any, Literal, Protocol, TypedDict
+
+from langfuse.langchain import CallbackHandler
 
 try:
     from langgraph.graph import END, START, StateGraph
@@ -35,7 +37,7 @@ class OrchestratorState(TypedDict):
 class InvokableGraph(Protocol):
     """orchestrator가 의존하는 graph 실행 인터페이스."""
 
-    def invoke(self, state: OrchestratorState) -> OrchestratorState:
+    def invoke(self, state: OrchestratorState, config: dict[str, Any] | None = None) -> OrchestratorState:
         """state를 받아 node 실행 후 갱신된 state를 반환한다."""
 
 
@@ -47,7 +49,7 @@ class _FallbackCompiledGraph:
 
         self.orchestrator = orchestrator
 
-    def invoke(self, state: OrchestratorState) -> OrchestratorState:
+    def invoke(self, state: OrchestratorState, config: dict[str, Any] | None = None) -> OrchestratorState:
         """route node를 실행한 뒤 선택된 sub-agent node를 호출한다."""
 
         route = self.orchestrator._route(state)
@@ -63,13 +65,19 @@ class _FallbackCompiledGraph:
 class RuleBasedAssistantAgent:
     """LangGraph state graph로 sub-agent 라우팅을 수행하는 채팅 orchestrator."""
 
-    def __init__(self, repository: JsonRepository, llm_provider: LLMProvider) -> None:
+    def __init__(
+        self,
+        repository: JsonRepository,
+        llm_provider: LLMProvider,
+        langfuse_handler: CallbackHandler | None = None,
+    ) -> None:
         """API 계층에서 저장소와 LLM provider 의존성을 주입받는다."""
 
         self.message_agent = InternalMessageManagementAgent(repository, llm_provider)
         self.customer_agent = AftercareCustomerManagementAgent(repository)
         self.todo_agent = TodoManagementAgent(repository)
         self.llm_agent = LLMQuestionAnswerAgent(llm_provider)
+        self.langfuse_handler = langfuse_handler
         self.graph = self._build_graph()
 
     def handle(self, message: str, model: LLMModel | None = None) -> AssistantCommandResponse:
@@ -80,7 +88,8 @@ class RuleBasedAssistantAgent:
             "model": model,
             "response": None,
         }
-        result = self.graph.invoke(state)
+        config = {"callbacks": [self.langfuse_handler]} if self.langfuse_handler else None
+        result = self.graph.invoke(state, config=config)
         return result["response"] or AssistantCommandResponse(intent="chat", reply="")
 
     def _build_graph(self) -> InvokableGraph:

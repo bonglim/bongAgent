@@ -26,6 +26,7 @@ Bong에이전트는 오늘 처리해야 할 ToDo, 사내쪽지, 사후관리 고
 │   │   ├── config.py         # .env 기반 환경 설정
 │   │   ├── llm_settings.py   # LLM 모델 목록/기본값/key env 매핑
 │   │   ├── llm_provider.py   # Gemini/OpenAI/mock LLM provider
+│   │   ├── observability.py  # Langfuse client와 LangGraph handler 구성
 │   │   ├── main.py           # FastAPI 라우터와 API 엔드포인트
 │   │   ├── models.py         # API 요청/응답 Pydantic 모델
 │   │   └── repository.py     # 로컬 JSON 저장소 접근 계층
@@ -76,9 +77,12 @@ backend/
         TodoManagementAgent                # ToDo 생성/수정/삭제
       llm_agent.py
         LLMQuestionAnswerAgent             # 일반 LLM 질문 답변 fallback
+    observability.py
+      LangfuseTracing                      # client와 callback handler 묶음
+      build_langfuse_tracing()             # 환경설정 기반 선택적 추적 활성화
 ```
 
-`orchestrator.py`는 `OrchestratorState`를 공유 상태로 사용하고, `message`, `customer`, `todo`, `llm` node를 조건부 edge로 연결합니다. `langgraph`가 설치되어 있으면 실제 `StateGraph`를 사용하고, 설치 전 로컬 실행 환경에서는 같은 `invoke()` 계약의 fallback graph로 동작합니다.
+`orchestrator.py`는 `OrchestratorState`를 공유 상태로 사용하고, `message`, `customer`, `todo`, `llm` node를 조건부 edge로 연결합니다. Langfuse key가 설정된 경우 `CallbackHandler`를 LangGraph 실행 config에 전달하여 orchestrator와 각 agent node의 실행 흐름을 추적합니다. `langgraph`가 설치되어 있으면 실제 `StateGraph`를 사용하고, 설치 전 로컬 실행 환경에서는 같은 `invoke()` 계약의 fallback graph로 동작합니다.
 
 라우팅 우선순위:
 
@@ -107,9 +111,13 @@ backend/app/main.py /api/assistant/command
   ↓
 RuleBasedAssistantAgent.handle()
   ↓
+Langfuse CallbackHandler로 LangGraph 실행 추적
+  ↓
 도메인별 agent.can_handle()
   ↓
 선택된 agent.handle()
+  ↓
+Gemini/OpenAI 실제 호출이면 Langfuse generation 기록
   ↓
 AssistantCommandResponse 반환
 ```
@@ -149,6 +157,10 @@ LLM_MODELS=gemini-2.5-flash|gemini-2.5-flash|gemini|GEMINI_API_KEY;gemini-3.5-fl
 DEFAULT_LLM_MODEL=gemini-3.5-flash
 BACKEND_CORS_ORIGINS=http://localhost:5173
 VITE_API_BASE_URL=http://localhost:8000
+LANGFUSE_PUBLIC_KEY=
+LANGFUSE_SECRET_KEY=
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+LANGFUSE_TRACING_ENVIRONMENT=development
 ```
 
 채팅창 우측상단의 LLM 콤보박스는 백엔드의 `GET /api/llm/models` 응답으로 구성됩니다. 모델 목록은 소스코드가 아니라 `.env`의 `LLM_MODELS`로 관리합니다.
@@ -169,6 +181,39 @@ NEW_MODEL_API_KEY=
 
 `provider`는 현재 `gemini`, `google`, `openai`를 지원합니다. `API_KEY_ENV_NAME`에는 해당 모델이 사용할 API 키 환경변수명을 넣습니다. `LLM_PROVIDER=auto`와 각 API 키가 설정되어 있으면 선택된 모델에 맞춰 Gemini 또는 OpenAI API를 호출합니다. API 키가 없거나 `LLM_PROVIDER=mock`이면 mock 응답으로 동작합니다.
 
+### Langfuse 관측성 설정
+
+Langfuse는 LangGraph의 agent 실행 흐름과 실제 Gemini/OpenAI 호출을 추적하는 용도로 사용합니다. 다음 두 key가 모두 설정된 경우에만 추적이 활성화됩니다.
+
+```env
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+LANGFUSE_TRACING_ENVIRONMENT=development
+```
+
+key가 비어 있으면 Langfuse client와 callback handler를 생성하지 않으며, 기존 애플리케이션 동작에는 영향을 주지 않습니다.
+
+추적 범위:
+
+- `CallbackHandler`: LangGraph orchestrator와 agent node 실행 흐름
+- `generation`: Gemini `generateContent` REST 호출
+- `generation`: OpenAI `Responses API` 호출
+- 기록 정보: 입력, 출력, 모델, provider, 실행시간
+
+Langfuse Cloud 리전에 따라 `LANGFUSE_BASE_URL`을 변경할 수 있습니다.
+
+```env
+# EU
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+
+# US
+LANGFUSE_BASE_URL=https://us.cloud.langfuse.com
+
+# Japan
+LANGFUSE_BASE_URL=https://jp.cloud.langfuse.com
+```
+
 ## 백엔드 실행 방법
 
 ```bash
@@ -178,6 +223,8 @@ source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
+
+`requirements.txt`에는 LangGraph 추적을 위한 `langchain`과 `langfuse`가 포함되어 있습니다.
 
 백엔드 확인:
 
@@ -207,6 +254,7 @@ npm run dev
 - 사후관리 고객 mock list: 우선순위 정렬 및 ToDo 전환
 - 자연어 명령: ToDo 추가/상태 수정/삭제 규칙 기반 처리
 - LLM 채팅 fallback: ToDo 명령이 아니면 선택한 Gemini/OpenAI 모델 또는 mock LLM provider 응답
+- Langfuse 관측성: LangGraph 실행 흐름과 Gemini/OpenAI generation 추적
 
 ## 자연어 명령 예시
 
@@ -235,5 +283,7 @@ POST   /api/assistant/command
 ## 개발 참고
 
 - 데이터는 `backend/data/*.json`에 저장됩니다.
+- Langfuse key가 없으면 관측성 기능만 비활성화되고 LLM 및 mock 기능은 그대로 동작합니다.
+- 현재 직접 REST 방식 LLM 호출의 입력·출력은 기록하지만, token usage와 비용 정보는 별도로 집계하지 않습니다.
 - MVP에서는 인증/권한, 실제 사내 시스템 연동, 실제 고객 개인정보 연동을 제외했습니다.
 - 확장 시 `JsonRepository`를 DB repository로 교체하고, `LLMProvider`를 Gemini/OpenAI/LangChain/LangGraph 기반 구현으로 교체하는 구조를 권장합니다.

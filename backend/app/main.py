@@ -17,6 +17,7 @@ from .agents.todo_agent import TodoManagementAgent
 from .config import Settings, get_settings
 from .llm_settings import public_llm_models
 from .llm_provider import build_llm_provider
+from .observability import build_langfuse_tracing
 from .models import AftercareCustomer, AftercareCustomerCreate, AftercareCustomerUpdate, AgentInvokeRequest, AssistantCommandRequest, AssistantCommandResponse, InternalMessage, InternalMessageCreate, InternalMessageUpdate, Todo, TodoCreate, TodoUpdate
 from .repository import JsonRepository
 
@@ -196,15 +197,22 @@ def get_agent(repository: JsonRepository = Depends(get_repository)) -> RuleBased
     """저장소와 LLM provider를 조합해 assistant agent를 만든다."""
     # 저장소와 LLM provider를 조합해 요청별 assistant agent를 만든다.
 
-    return RuleBasedAssistantAgent(repository, build_llm_provider(settings))
+    tracing = build_langfuse_tracing(settings)
+    llm_provider = build_llm_provider(settings, tracing.client if tracing else None)
+    return RuleBasedAssistantAgent(repository, llm_provider, tracing.handler if tracing else None)
 
 
 def _get_agent_by_id(agent_id: str, repository: JsonRepository, settings_obj: Settings) -> DomainAgent | RuleBasedAssistantAgent | None:
     """agent id에 맞는 orchestrator 또는 sub-agent 인스턴스를 만든다."""
 
-    llm_provider = build_llm_provider(settings_obj)
+    tracing = build_langfuse_tracing(settings_obj)
+    llm_provider = build_llm_provider(settings_obj, tracing.client if tracing else None)
     agents = {
-        "orchestrator": RuleBasedAssistantAgent(repository, llm_provider),
+        "orchestrator": RuleBasedAssistantAgent(
+            repository,
+            llm_provider,
+            tracing.handler if tracing else None,
+        ),
         "message": InternalMessageManagementAgent(repository, llm_provider),
         "message-priority": InternalMessagePriorityRecommendationAgent(repository, llm_provider),
         "customer": AftercareCustomerManagementAgent(repository),

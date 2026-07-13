@@ -4,3 +4,5 @@ pydantic-settings==2.7.1
 python-dotenv==1.0.1
 certifi==2026.6.17
 langgraph>=0.2.0
+langchain>=1.0.0
+langfuse>=4.0.0

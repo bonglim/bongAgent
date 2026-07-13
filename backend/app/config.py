@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.5-flash"
     openai_api_key: str = ""
+    # Langfuse key가 모두 설정된 경우에만 observability tracing을 활성화한다.
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    langfuse_base_url: str = "https://cloud.langfuse.com"
+    langfuse_tracing_environment: str = "development"
     data_dir: Path = Path(__file__).resolve().parents[1] / "data"
 
     model_config = SettingsConfigDict(
