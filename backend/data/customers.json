@@ -7,7 +7,9 @@
     "scheduled_date": "2026-07-06",
     "priority": "high",
     "detail": "만기 후 재예치 또는 대체 상품 상담 필요",
-    "linked_todo_id": null
+    "linked_todo_id": null,
+    "priority_rank": 1,
+    "priority_reason": "정기예금 만기가 임박하여 빠른 상담이 필요합니다."
   },
   {
     "id": "customer_002",
@@ -17,7 +19,9 @@
     "scheduled_date": "2026-07-06",
     "priority": "high",
     "detail": "최근 시장 변동성 확대에 따른 포트폴리오 점검",
-    "linked_todo_id": "todo_5fbc7fa7"
+    "linked_todo_id": "todo_5fbc7fa7",
+    "priority_rank": 2,
+    "priority_reason": "시장의 변동성 확대에 따른 펀드 리밸런싱이 긴급하게 요구됩니다."
   },
   {
     "id": "customer_003",
@@ -27,7 +31,9 @@
     "scheduled_date": "2026-07-07",
     "priority": "medium",
     "detail": "소득 증빙 서류 추가 수취 필요",
-    "linked_todo_id": null
+    "linked_todo_id": null,
+    "priority_rank": 3,
+    "priority_reason": "대출 관련 서류 확인이 필요하나 기한이 다소 여유롭습니다."
   },
   {
     "id": "customer_dede210d",
@@ -37,6 +43,8 @@
     "scheduled_date": "오늘",
     "priority": "low",
     "detail": "사후관리고객 요약해줘.",
-    "linked_todo_id": null
+    "linked_todo_id": null,
+    "priority_rank": 4,
+    "priority_reason": "사후관리 필요하나 즉각적인 조치가 요구되지 않습니다."
   }
 ]

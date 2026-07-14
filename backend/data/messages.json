@@ -9,19 +9,19 @@
     "body": "금일 고액 이체 예정 고객의 사전 확인 절차를 완료해 주세요.",
     "linked_todo_id": null,
     "priority_rank": 1,
-    "priority_reason": "고액 이체는 고객의 자산과 직결되므로 신속한 사전 확인이 필요합니다."
+    "priority_reason": "고액 이체는 고객의 자금에 직접적인 영향을 미치므로 사전 확인이 필수적입니다."
   },
   {
     "id": "message_002",
     "title": "VIP 고객 상담 일정 조율",
     "sender": "PB센터",
     "received_at": "2026-07-06",
-    "priority": "high",
+    "priority": "medium",
     "status": "unread",
     "body": "VIP 고객 상담 희망 시간을 확인하고 일정 회신이 필요합니다.",
     "linked_todo_id": null,
-    "priority_rank": 2,
-    "priority_reason": "VIP 고객 상담은 고객 만족도에 큰 영향을 미치며, 빠른 조율이 중요합니다."
+    "priority_rank": 4,
+    "priority_reason": "VIP 고객의 상담 일정 조율은 고객 관리의 중요한 부분으로, 빠르게 처리해야 합니다."
   },
   {
     "id": "message_003",
@@ -33,7 +33,7 @@
     "body": "영업점 운영 기준 변경 내용을 확인해 주세요.",
     "linked_todo_id": null,
     "priority_rank": 6,
-    "priority_reason": "영업점 운영 기준 변경은 준법 관련 사항이지만, 급한 사안은 아닙니다."
+    "priority_reason": "운영 기준 변경 공지는 현재 긴급성을 요하지 않으며, 일정한 시간 내에 처리할 수 있습니다."
   },
   {
     "id": "message_004",
@@ -45,19 +45,19 @@
     "body": "에이전트 기술협상을 위해 참석 바랍니다. 관련 자료는 첨부파일을 확인해 주세요.",
     "linked_todo_id": null,
     "priority_rank": 5,
-    "priority_reason": "GenAI 기술협상 참여 요청은 중요하지만 긴급하지 않아 여유 있게 처리할 수 있습니다."
+    "priority_reason": "기술협상 요청은 프로젝트의 진행에 영향을 줄 수 있지만, 긴급성을 다소 덜 요구합니다."
   },
   {
     "id": "message_005",
     "title": "상반기 경영성과 보고서 제출 요청",
     "sender": "재무기획부",
     "received_at": "2026-07-09",
-    "priority": "medium",
+    "priority": "high",
     "status": "unread",
     "body": "상반기 경영성과 보고서를 제출해 주세요.",
     "linked_todo_id": null,
-    "priority_rank": 4,
-    "priority_reason": "경영성과 보고서는 기한 내 제출이 필요하나, 오늘 처리할 필요성은 상대적으로 낮습니다."
+    "priority_rank": 3,
+    "priority_reason": "경영성과 보고서는 경영 결정에 중요한 자료로, 신속한 제출이 필요합니다."
   },
   {
     "id": "message_056995c3",
@@ -68,7 +68,7 @@
     "status": "unread",
     "body": "11",
     "linked_todo_id": null,
-    "priority_rank": 3,
-    "priority_reason": "사내쪽지 테스트는 업무의 흐름에 영향을 미칠 수 있어 가능한 한 빨리 처리해야 합니다."
+    "priority_rank": 2,
+    "priority_reason": "테스트 요청은 시스템 점검 및 안정화에 중요하여 즉각 처리해야 합니다."
   }
 ]

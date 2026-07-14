@@ -10,6 +10,7 @@ frontend/dist/
 # Local configuration
 .env
 .DS_Store
+.tokensave/
 
 # Environment variables
 .env
