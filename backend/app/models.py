@@ -64,6 +64,8 @@ class InternalMessage(BaseModel):
     status: MessageStatus
     body: str
     linked_todo_id: str | None = None
+    priority_rank: int | None = Field(default=None, ge=1)
+    priority_reason: str = ""
 
 
 class InternalMessageCreate(BaseModel):
@@ -80,6 +82,8 @@ class InternalMessageUpdate(BaseModel):
     """사내쪽지 일부 필드만 수정할 때 사용하는 부분 update payload."""
 
     priority: Priority | None = None
+    priority_rank: int | None = Field(default=None, ge=1)
+    priority_reason: str | None = None
 
 
 class AftercareCustomer(BaseModel):
@@ -93,6 +97,8 @@ class AftercareCustomer(BaseModel):
     priority: Priority
     detail: str
     linked_todo_id: str | None = None
+    priority_rank: int | None = Field(default=None, ge=1)
+    priority_reason: str = ""
 
 
 class AftercareCustomerCreate(BaseModel):
@@ -110,6 +116,14 @@ class AftercareCustomerUpdate(BaseModel):
     """사후관리 고객 일부 필드만 수정할 때 사용하는 부분 update payload."""
 
     priority: Priority | None = None
+    priority_rank: int | None = Field(default=None, ge=1)
+    priority_reason: str | None = None
+
+
+class CustomerPriorityRecommendationRequest(BaseModel):
+    """사후관리 고객 AI 우선순위 추천에 사용할 선택 모델."""
+
+    model: LLMModel | None = None
 
 
 class AssistantCommandRequest(BaseModel):

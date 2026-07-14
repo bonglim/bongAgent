@@ -36,6 +36,17 @@ export async function fetchCustomers() {
   return parseResponse(await fetch(`${API_BASE_URL}/api/customers/aftercare`));
 }
 
+/** 선택한 LLM으로 사후관리 고객 우선순위와 선정 사유를 추천받는다. */
+export async function recommendCustomerPriorities(model) {
+  return parseResponse(
+    await fetch(`${API_BASE_URL}/api/customers/aftercare/ai-recommend`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model }),
+    })
+  );
+}
+
 /** 백엔드 설정에서 내려주는 LLM 모델 선택기 옵션을 조회한다. */
 export async function fetchLlmModels() {
   return parseResponse(await fetch(`${API_BASE_URL}/api/llm/models`));

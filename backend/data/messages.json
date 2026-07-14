@@ -4,30 +4,36 @@
     "title": "고액 이체 사전 확인 요청",
     "sender": "영업지원부",
     "received_at": "2026-07-06",
-    "priority": "medium",
+    "priority": "high",
     "status": "unread",
     "body": "금일 고액 이체 예정 고객의 사전 확인 절차를 완료해 주세요.",
-    "linked_todo_id": null
+    "linked_todo_id": null,
+    "priority_rank": 1,
+    "priority_reason": "영업지원부의 고액 이체 사전 확인 건으로, 금일 내에 처리가 되지 않으면 고객의 금융 거래에 즉각적인 피해가 발생하므로 최우선 순위로 지정했습니다."
   },
   {
     "id": "message_002",
     "title": "VIP 고객 상담 일정 조율",
     "sender": "PB센터",
     "received_at": "2026-07-06",
-    "priority": "low",
+    "priority": "medium",
     "status": "unread",
     "body": "VIP 고객 상담 희망 시간을 확인하고 일정 회신이 필요합니다.",
-    "linked_todo_id": null
+    "linked_todo_id": null,
+    "priority_rank": 4,
+    "priority_reason": "PB센터의 VIP 고객 상담 일정 조율 건으로, 고객과의 신뢰 구축 및 영업 기회 확보를 위해 당일 내 회신이 권장됩니다."
   },
   {
     "id": "message_003",
     "title": "영업점 운영 기준 변경 공지",
     "sender": "준법감시부",
     "received_at": "2026-07-05",
-    "priority": "medium",
+    "priority": "high",
     "status": "unread",
     "body": "영업점 운영 기준 변경 내용을 확인해 주세요.",
-    "linked_todo_id": null
+    "linked_todo_id": null,
+    "priority_rank": 2,
+    "priority_reason": "준법감시부의 영업점 운영 기준 변경 공지로, 은행 업무 전반의 법적 규제 준수 및 내부 통제를 위해 즉시 확인해야 하는 고순위 항목입니다."
   },
   {
     "id": "message_004",
@@ -35,9 +41,11 @@
     "sender": "금융AI2센터",
     "received_at": "2026-07-07",
     "priority": "medium",
-    "status": "todo_linked",
+    "status": "unread",
     "body": "에이전트 기술협상을 위해 참석 바랍니다. 관련 자료는 첨부파일을 확인해 주세요.",
-    "linked_todo_id": "todo_ac4b1729"
+    "linked_todo_id": null,
+    "priority_rank": 5,
+    "priority_reason": "금융AI2센터의 기술협상 참여 요청으로, 사업 추진을 위한 일정 조율 및 첨부파일 사전 검토가 필요합니다."
   },
   {
     "id": "message_005",
@@ -45,18 +53,22 @@
     "sender": "재무기획부",
     "received_at": "2026-07-09",
     "priority": "high",
-    "status": "todo_linked",
+    "status": "unread",
     "body": "상반기 경영성과 보고서를 제출해 주세요.",
-    "linked_todo_id": "todo_21b98971"
+    "linked_todo_id": null,
+    "priority_rank": 3,
+    "priority_reason": "재무기획부의 상반기 경영성과 보고서 제출 요청으로, 중요 경영 정보 작성 및 기한 내 보고를 위해 오늘 중 처리가 필요합니다."
   },
   {
     "id": "message_056995c3",
     "title": "사내쪽지 테스트",
     "sender": "11",
     "received_at": "2026-07-11",
-    "priority": "medium",
+    "priority": "low",
     "status": "unread",
     "body": "11",
-    "linked_todo_id": null
+    "linked_todo_id": null,
+    "priority_rank": 6,
+    "priority_reason": "단순 사내쪽지 테스트용 발송 건으로, 실제 은행 업무 연관성 및 긴급성이 전혀 없어 가장 후순위로 배정했습니다."
   }
 ]

@@ -74,6 +74,7 @@ backend/
         InternalMessagePriorityRecommendationAgent
       customer_agent.py
         AftercareCustomerManagementAgent   # 사후관리 고객 조회/등록/삭제
+        AftercareCustomerPriorityRecommendationAgent
       todo_agent.py
         TodoManagementAgent                # ToDo 생성/수정/삭제
       llm_agent.py
@@ -249,6 +250,7 @@ npm run dev
 - ToDo CRUD: 생성, 수정, 삭제, 상세 모달
 - 사내쪽지 mock list: 우선순위 정렬 및 ToDo 전환
 - 사후관리 고객 mock list: 우선순위 정렬 및 ToDo 전환
+- 채팅 우선순위 재조정: 명시적 날짜 기준 또는 LLM 추천으로 사내쪽지·사후관리 고객의 1~N 순위, 등급, 사유 저장
 - 사후관리 고객 의미 기반 질의응답: 현재 고객 데이터 기반 요약, 검색, 비교, 후속 조치 안내
 - 자연어 명령: ToDo 추가/상태 수정/삭제 규칙 기반 처리
 - LLM 채팅 fallback: ToDo 명령이 아니면 선택한 Gemini/OpenAI 모델 또는 mock LLM provider 응답
@@ -260,6 +262,9 @@ npm run dev
 오늘 오후 3시에 김민수 고객에게 전화하기 추가해줘
 김민수 고객 전화 업무를 진행중으로 바꿔줘
 오전 회의 준비 업무 삭제해줘
+사후관리 고객을 최근날짜 순으로 우선순위를 지정해 줘
+사후관리 고객 우선순위를 재조정해 줘
+사내쪽지 우선순위를 재조정해 줘
 고객에게 보낼 만기 안내 문구 작성해줘
 ```
 

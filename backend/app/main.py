@@ -9,7 +9,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .agent import RuleBasedAssistantAgent
-from .agents.customer_agent import AftercareCustomerManagementAgent
+from .agents.customer_agent import AftercareCustomerManagementAgent, AftercareCustomerPriorityRecommendationAgent
 from .agents.llm_agent import LLMQuestionAnswerAgent
 from .agents.message_agent import InternalMessageManagementAgent, InternalMessagePriorityRecommendationAgent
 from .agents.shared import AgentContext, DomainAgent
@@ -18,7 +18,7 @@ from .config import Settings, get_settings
 from .llm_settings import public_llm_models
 from .llm_provider import build_llm_provider
 from .observability import build_langfuse_tracing
-from .models import AftercareCustomer, AftercareCustomerCreate, AftercareCustomerUpdate, AgentInvokeRequest, AssistantCommandRequest, AssistantCommandResponse, InternalMessage, InternalMessageCreate, InternalMessageUpdate, Todo, TodoCreate, TodoUpdate
+from .models import AftercareCustomer, AftercareCustomerCreate, AftercareCustomerUpdate, AgentInvokeRequest, AssistantCommandRequest, AssistantCommandResponse, CustomerPriorityRecommendationRequest, InternalMessage, InternalMessageCreate, InternalMessageUpdate, Todo, TodoCreate, TodoUpdate
 from .repository import JsonRepository
 
 
@@ -216,6 +216,7 @@ def _get_agent_by_id(agent_id: str, repository: JsonRepository, settings_obj: Se
         "message": InternalMessageManagementAgent(repository, llm_provider),
         "message-priority": InternalMessagePriorityRecommendationAgent(repository, llm_provider),
         "customer": AftercareCustomerManagementAgent(repository, llm_provider),
+        "customer-priority": AftercareCustomerPriorityRecommendationAgent(repository, llm_provider),
         "todo": TodoManagementAgent(repository),
         "llm": LLMQuestionAnswerAgent(llm_provider),
     }
@@ -388,6 +389,20 @@ def list_aftercare_customers(repository: JsonRepository = Depends(get_repository
     # 우선순위 패널에 표시할 mock 사후관리 고객 목록을 반환한다.
 
     return repository.list_customers()
+
+
+@app.post("/api/customers/aftercare/ai-recommend", response_model=AssistantCommandResponse)
+def recommend_aftercare_customer_priorities(
+    payload: CustomerPriorityRecommendationRequest,
+    repository: JsonRepository = Depends(get_repository),
+    settings_obj: Settings = Depends(get_settings),
+) -> AssistantCommandResponse:
+    """선택한 LLM으로 사후관리 고객 우선순위와 선정 사유를 추천한다."""
+
+    tracing = build_langfuse_tracing(settings_obj)
+    llm_provider = build_llm_provider(settings_obj, tracing.client if tracing else None)
+    agent = AftercareCustomerPriorityRecommendationAgent(repository, llm_provider)
+    return agent.handle(AgentContext(message="사후관리 고객 우선순위 추천 및 재정렬", model=payload.model))
 
 
 @app.post("/api/customers/aftercare", response_model=AftercareCustomer)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import date, timedelta
 
 from ..llm_provider import LLMProvider
 from ..models import AssistantCommandResponse, InternalMessage, InternalMessageCreate, LLMModel
@@ -21,7 +22,7 @@ class InternalMessageManagementAgent:
     DETAIL_WORDS = ["내용", "상세", "본문", "자세히", "전문"]
     QUESTION_WORDS = ["뭐", "무엇", "어떤", "어때", "있어", "있나", "있니", "알려", "해야", "할까"]
     PRIORITY_WORDS = ["우선순위", "우선 순위", "중요도", "순위", "priority"]
-    PRIORITY_ACTION_WORDS = ["설정", "추천", "분류", "정해", "매겨", "바꿔", "변경"]
+    PRIORITY_ACTION_WORDS = ["설정", "지정", "추천", "분류", "정해", "매겨", "바꿔", "변경", "재조정", "재정렬", "조정"]
     PRIORITY_FILTERS = {
         "high": ["high", "높음", "높은", "중요", "긴급"],
         "medium": ["medium", "보통", "중간"],
@@ -262,7 +263,7 @@ class InternalMessageManagementAgent:
 
 
 class InternalMessagePriorityRecommendationAgent:
-    """LLM을 이용해 사내쪽지 우선순위를 추천하고 저장하는 sub-agent."""
+    """명시적 정렬 기준 또는 LLM 추천으로 사내쪽지 우선순위를 재조정한다."""
 
     PRIORITY_VALUES = {"high", "medium", "low"}
 
@@ -281,29 +282,79 @@ class InternalMessagePriorityRecommendationAgent:
         return has_priority and has_action
 
     def handle(self, context: AgentContext) -> AssistantCommandResponse:
-        """LLM 추천 결과를 사내쪽지 우선순위에 반영한다."""
+        """명시된 기준은 규칙으로, 기준이 없으면 LLM으로 순위와 사유를 결정한다."""
 
         messages = self.repository.list_messages()
         if not messages:
             return AssistantCommandResponse(intent="set_message_priorities", reply="우선순위를 설정할 사내쪽지가 없습니다.")
 
-        recommendations = self._recommend_with_llm(messages, context.model)
-        if not recommendations:
-            recommendations = self._recommend_with_rules(messages)
-        updated_messages = self.repository.update_message_priorities(recommendations)
-        applied = [message for message in updated_messages if message.id in recommendations]
-        summary = ", ".join(f"{message.title}: {message.priority}" for message in applied[:5])
+        criterion = self._explicit_date_criterion(context.message)
+        used_fallback = False
+        if criterion:
+            recommendations, summary = self._recommend_by_date(messages, criterion)
+            method = "직접 지시"
+        else:
+            recommendations, summary = self._recommend_with_llm(messages, context.model)
+            method = "LLM 추천"
+            if not recommendations:
+                recommendations, summary = self._recommend_with_rules(messages)
+                used_fallback = True
+        updated_messages = self.repository.update_message_priority_recommendations(recommendations)
+        by_id = {message.id: message for message in updated_messages}
+        reasons = [
+            {"message_id": item_id, "title": by_id[item_id].title, **item}
+            for item_id, item in recommendations.items()
+            if item_id in by_id
+        ]
+        reasons.sort(key=lambda item: item["rank"])
+        detail = "\n".join(
+            f"{item['rank']}. [{item['priority']}] {item['title']} - {item['reason']}" for item in reasons
+        )
         return AssistantCommandResponse(
             intent="set_message_priorities",
-            reply=f"사내쪽지 {len(applied)}건의 우선순위를 설정했습니다. {summary}",
+            reply=f"사내쪽지 {len(reasons)}건의 우선순위를 {method}로 재조정했습니다.\n조정 기준: {summary}\n{detail}",
             result={
                 "messages": [message.model_dump(mode="json") for message in updated_messages],
-                "recommendations": recommendations,
+                "reasons": reasons,
+                "summary": summary,
+                "method": method,
+                "used_fallback": used_fallback,
             },
         )
 
-    def _recommend_with_llm(self, messages: list[InternalMessage], model: LLMModel | None) -> dict[str, str]:
-        """LLM에게 우선순위 JSON을 요청하고 유효한 값만 반환한다."""
+    def _explicit_date_criterion(self, command: str) -> str | None:
+        if contains_any(command, ["최근", "최신", "늦게 받은", "새로운 날짜", "최근날짜"]):
+            return "newest"
+        if contains_any(command, ["오래된", "과거", "먼저 받은", "오래된 날짜"]):
+            return "oldest"
+        return None
+
+    def _recommend_by_date(
+        self, messages: list[InternalMessage], criterion: str
+    ) -> tuple[dict[str, dict], str]:
+        reverse = criterion == "newest"
+        ordered = sorted(messages, key=lambda item: (self._date_sort_key(item.received_at), item.id), reverse=reverse)
+        label = "최근 수신일 순" if reverse else "오래된 수신일 순"
+        return self._ranked_items(
+            ordered, lambda item: f"사용자가 지정한 {label} 기준(수신일 {item.received_at})을 적용했습니다."
+        ), label
+
+    def _date_sort_key(self, value: str) -> int:
+        """ISO 날짜와 오늘/내일 표현을 같은 정렬 key로 변환한다."""
+
+        if value == "오늘":
+            return date.today().toordinal()
+        if value == "내일":
+            return (date.today() + timedelta(days=1)).toordinal()
+        try:
+            return date.fromisoformat(value[:10]).toordinal()
+        except ValueError:
+            return -1
+
+    def _recommend_with_llm(
+        self, messages: list[InternalMessage], model: LLMModel | None
+    ) -> tuple[dict[str, dict], str]:
+        """LLM에게 전체 순위와 사유 JSON을 요청한다."""
 
         prompt = self._build_prompt(messages)
         response = self.llm_provider.chat(prompt, model)
@@ -324,40 +375,66 @@ class InternalMessagePriorityRecommendationAgent:
             for message in messages
         ]
         return (
-            "은행 직원의 사내쪽지 우선순위를 high, medium, low 중 하나로 추천하세요. "
+            "은행 직원의 사내쪽지 처리 우선순위를 전체 1위부터 순서대로 추천하세요. "
             "긴급 처리, 준법/감사/보안, 고객 영향, 오늘 처리 필요성이 크면 high입니다. "
-            "반드시 설명 없이 JSON 객체만 반환하세요. 형식: {\"message_id\":\"high|medium|low\"}. "
+            "모든 항목에 서로 다른 rank와 데이터에 근거한 한국어 사유를 넣으세요. "
+            "반드시 JSON만 반환하세요. 형식: "
+            '{"summary":"선정 기준","recommendations":'
+            '[{"id":"message_id","priority":"high|medium|low","rank":1,"reason":"조정 사유"}]}. '
             f"사내쪽지 목록: {json.dumps(rows, ensure_ascii=False)}"
         )
 
-    def _parse_recommendations(self, response: str, allowed_ids: set[str]) -> dict[str, str]:
-        """LLM 응답에서 JSON 객체를 찾아 priority mapping으로 변환한다."""
+    def _parse_recommendations(self, response: str, allowed_ids: set[str]) -> tuple[dict[str, dict], str]:
+        """LLM 응답에서 누락 없는 순위, 등급, 사유를 검증한다."""
 
         match = re.search(r"\{.*\}", response, flags=re.DOTALL)
         if not match:
-            return {}
+            return {}, ""
         try:
             parsed = json.loads(match.group(0))
         except json.JSONDecodeError:
-            return {}
-        return {
-            message_id: priority
-            for message_id, priority in parsed.items()
-            if message_id in allowed_ids and priority in self.PRIORITY_VALUES
-        }
+            return {}, ""
+        recommendations = {}
+        for item in parsed.get("recommendations", []):
+            item_id, priority, rank = item.get("id"), item.get("priority"), item.get("rank")
+            reason = str(item.get("reason", "")).strip()
+            if item_id in allowed_ids and priority in self.PRIORITY_VALUES and isinstance(rank, int) and reason:
+                recommendations[item_id] = {"priority": priority, "rank": rank, "reason": reason}
+        ranks = {item["rank"] for item in recommendations.values()}
+        if set(recommendations) != allowed_ids or ranks != set(range(1, len(allowed_ids) + 1)):
+            return {}, ""
+        summary = str(parsed.get("summary", "업무 긴급도와 고객 영향을 종합했습니다.")).strip()
+        return recommendations, summary
 
-    def _recommend_with_rules(self, messages: list[InternalMessage]) -> dict[str, str]:
+    def _recommend_with_rules(self, messages: list[InternalMessage]) -> tuple[dict[str, dict], str]:
         """LLM 응답을 파싱하지 못했을 때 쓰는 결정적 fallback 추천."""
 
         high_words = ["긴급", "중요", "보안", "준법", "감사", "고액", "VIP", "오늘", "제출", "확인"]
         low_words = ["공지", "참고", "안내"]
-        recommendations = {}
+        scored = []
         for message in messages:
             text = f"{message.title} {message.sender} {message.body}"
             if contains_any(text, high_words):
-                recommendations[message.id] = "high"
+                score, reason = 2, "긴급·중요·준법 또는 고객 영향 키워드가 확인됩니다."
             elif contains_any(text, low_words):
-                recommendations[message.id] = "low"
+                score, reason = 0, "공지·참고 성격의 안내로 분류했습니다."
             else:
-                recommendations[message.id] = "medium"
-        return recommendations
+                score, reason = 1, "즉시 처리를 요구하는 명시적 근거가 없어 일반 우선순위로 분류했습니다."
+            scored.append((score, message.received_at, message, reason))
+        scored.sort(key=lambda item: (item[0], item[1]), reverse=True)
+        ordered = [item[2] for item in scored]
+        reasons = {item[2].id: item[3] for item in scored}
+        return self._ranked_items(ordered, lambda item: reasons[item.id]), "긴급성, 준법·고객 영향, 수신일을 종합해 정렬했습니다."
+
+    def _ranked_items(self, ordered: list[InternalMessage], reason_for) -> dict[str, dict]:
+        """정렬된 항목에 1~N 순위와 상·중·하 등급을 부여한다."""
+
+        count = len(ordered)
+        return {
+            item.id: {
+                "priority": "high" if rank * 3 <= count + 2 else "medium" if rank * 3 <= count * 2 + 2 else "low",
+                "rank": rank,
+                "reason": reason_for(item),
+            }
+            for rank, item in enumerate(ordered, start=1)
+        }

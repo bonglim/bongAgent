@@ -10,7 +10,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { DndContext, PointerSensor, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { BarChart3, CalendarDays, Check, CheckCircle2, ClipboardList, Copy, History, LayoutDashboard, Loader2, MessageSquareText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus, Redo2, RefreshCw, Send, Settings, Star, Timer, Trash2, Undo2, UserRound } from "lucide-react";
+import { BarChart3, CalendarDays, Check, CheckCircle2, ClipboardList, Copy, History, LayoutDashboard, Loader2, MessageSquareText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus, Redo2, RefreshCw, Send, Settings, Sparkles, Star, Timer, Trash2, Undo2, UserRound } from "lucide-react";
 import {
   API_BASE_URL,
   createCustomer,
@@ -28,6 +28,7 @@ import {
   fetchMessages,
   fetchTodos,
   invokeAgent,
+  recommendCustomerPriorities,
   redoHistory,
   restoreHistory,
   sendAssistantCommand,
@@ -198,6 +199,9 @@ export default function App() {
   const [isCustomerDetailOpen, setIsCustomerDetailOpen] = useState(false);
   const [isCustomerCreateOpen, setIsCustomerCreateOpen] = useState(false);
   const [customerDraft, setCustomerDraft] = useState(emptyCustomerDraft());
+  const [isCustomerPriorityOpen, setIsCustomerPriorityOpen] = useState(false);
+  const [customerPriorityResult, setCustomerPriorityResult] = useState(null);
+  const [customerPriorityLoading, setCustomerPriorityLoading] = useState(false);
   const [isChatVisible, setIsChatVisible] = useState(true);
   const [chatInput, setChatInput] = useState("");
   const [selectedModel, setSelectedModel] = useState(DEFAULT_LLM_MODEL);
@@ -214,6 +218,8 @@ export default function App() {
   const [agentApiResult, setAgentApiResult] = useState(null);
   const [agentApiLoading, setAgentApiLoading] = useState(false);
   const [notice, setNotice] = useState("");
+  const [tutorialCaption, setTutorialCaption] = useState("");
+  const [tutorialCursor, setTutorialCursor] = useState({ x: 820, y: 420, visible: false });
   const [loading, setLoading] = useState(true);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const groupedTodos = useMemo(() => groupTodos(todos), [todos]);
@@ -286,7 +292,7 @@ export default function App() {
     try {
       const response = await invokeAgent(selectedAgentId, { message: agentApiInput.trim(), model: selectedModel });
       setAgentApiResult(response);
-      if (["create_message", "delete_message", "set_message_priorities", "create_customer", "delete_customer", "create_todo", "update_todo", "delete_todo"].includes(response.intent)) {
+      if (["create_message", "delete_message", "set_message_priorities", "create_customer", "delete_customer", "set_customer_priorities", "create_todo", "update_todo", "delete_todo"].includes(response.intent)) {
         await refreshDashboard();
       }
       await refreshHistoryState();
@@ -562,6 +568,25 @@ export default function App() {
     }
   }
 
+  /** 전체 사후관리 고객을 LLM으로 평가해 우선순위를 저장하고 선정 사유를 표시한다. */
+  async function handleCustomerPriorityRecommendation() {
+    if (!customers.length || customerPriorityLoading) return;
+    setCustomerPriorityLoading(true);
+    try {
+      const response = await recommendCustomerPriorities(selectedModel);
+      const result = response.result || { customers: [], reasons: [], summary: response.reply };
+      setCustomers(result.customers || []);
+      setCustomerPriorityResult(result);
+      setIsCustomerPriorityOpen(true);
+      setNotice(response.reply);
+      await Promise.all([refreshHistoryState(), fetchTodos().then(setTodos)]);
+    } catch (error) {
+      setNotice(error.message);
+    } finally {
+      setCustomerPriorityLoading(false);
+    }
+  }
+
   /** ToDo 카드 별 아이콘 클릭 시 priority를 순환시키고 연결된 원천 데이터와 함께 저장한다. */
   async function cycleTodoPriority(todo) {
     const nextPriority = NEXT_PRIORITY[todo.priority] || "low";
@@ -603,7 +628,7 @@ export default function App() {
       const response = await sendAssistantCommand(message, selectedModel);
       setChatMessages((current) => [...current, { role: "assistant", text: response.reply }]);
       if (response.todos) setTodos(response.todos);
-      if (["create_message", "delete_message", "set_message_priorities", "create_customer", "delete_customer"].includes(response.intent)) {
+      if (["create_message", "delete_message", "set_message_priorities", "create_customer", "delete_customer", "set_customer_priorities"].includes(response.intent)) {
         await refreshDashboard();
       }
       await refreshHistoryState();
@@ -614,8 +639,227 @@ export default function App() {
     }
   }
 
+  /** 녹화 전용 URL에서 실제 API와 화면 상태를 이용해 90초 사용자 튜토리얼을 재생한다. */
+  useEffect(() => {
+    const tutorialMode = new URLSearchParams(window.location.search).get("tutorial");
+    if (!["1", "settings"].includes(tutorialMode) || window.__bongTutorialRunning) return undefined;
+    window.__bongTutorialRunning = true;
+
+    const wait = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+    const moveCursor = (selector, fallback = { x: 820, y: 420 }) => {
+      const target = selector ? document.querySelector(selector) : null;
+      if (!target) {
+        setTutorialCursor({ ...fallback, visible: true });
+        return;
+      }
+      const rect = target.getBoundingClientRect();
+      setTutorialCursor({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, visible: true });
+    };
+    const show = async (caption, selector, milliseconds, action) => {
+      if (action) await action();
+      await wait(180);
+      setTutorialCaption(caption);
+      moveCursor(selector);
+      await wait(milliseconds);
+    };
+
+    async function runTutorial() {
+      let manualTodoId = "";
+      let messageTodoId = "";
+      let customerTodoId = "";
+
+      if (tutorialMode === "settings") {
+        await show("설정 클릭 → Agent API 정보 확인", ".agent-api-modal", 7000, async () => {
+          const response = await fetchAgentApis();
+          setAgentApiItems(response.agents || []);
+          setIsAgentApiOpen(true);
+        });
+        await show("설정 창을 드래그해 원하는 위치로 이동", ".agent-api-modal", 7000, async () => {
+          const modal = document.querySelector(".agent-api-modal");
+          if (modal) {
+            modal.style.transition = "transform 900ms ease";
+            modal.style.transform = "translate(70px, 32px)";
+          }
+        });
+        await show("설정 창 닫기", ".agent-api-modal .text-button", 6000, async () => {
+          const modal = document.querySelector(".agent-api-modal");
+          if (modal) modal.style.transform = "translate(0, 0)";
+          await wait(500);
+          setIsAgentApiOpen(false);
+        });
+        setTutorialCursor((current) => ({ ...current, visible: false }));
+        await show("업무를 더 빠르고 스마트하게 · KB Comrade", null, 3600);
+        window.__bongTutorialFinished = true;
+        return;
+      }
+
+      await show("KB Comrade 사용자 튜토리얼", null, 2600);
+      await show("오늘의 할일 · + ToDo 버튼을 선택합니다", ".compact-todo-button", 2400);
+      const manualPayload = {
+        title: "튜토리얼 보고서 검토",
+        description: "고객 보고서를 검토하고 의견을 정리합니다.",
+        status: "todo",
+        priority: "high",
+        due_date: toDateKey(new Date()),
+        source: "manual",
+      };
+      await show("업무 내용을 입력하고 저장합니다", ".modal .primary-button", 3000, async () => {
+        setDraft(manualPayload);
+        setSelectedTodo(null);
+        setIsModalOpen(true);
+      });
+      const manualTodo = await createTodo(manualPayload);
+      manualTodoId = manualTodo.id;
+      setIsModalOpen(false);
+      await refreshDashboard();
+
+      await show("자연어로도 오늘의 할일을 등록할 수 있습니다", ".chat-form input", 3000, async () => {
+        const text = "오늘 오후 4시에 튜토리얼 고객 전화 추가해줘";
+        setChatInput(text);
+        setChatMessages((current) => [...current, { role: "user", text }]);
+        const response = await sendAssistantCommand(text, selectedModel);
+        setChatMessages((current) => [...current, { role: "assistant", text: response.reply }]);
+        await refreshDashboard();
+      });
+      await show("되돌리기로 바로 이전 변경을 복원합니다", "button[aria-label='되돌리기']", 2800, async () => {
+        await applyHistoryResponse(await undoHistory());
+      });
+
+      await show("오늘의 업무를 진행중으로 드래그합니다", "#status-doing", 3200, async () => {
+        await updateTodo(manualTodoId, { status: "doing" });
+        await refreshDashboard();
+      });
+      await show("진행중 업무를 완료로 드래그합니다", "#status-done", 3000, async () => {
+        await updateTodo(manualTodoId, { status: "done" });
+        await refreshDashboard();
+      });
+
+      await show("사내쪽지 목록과 상세 내용을 확인합니다", ".message-detail-modal", 3400, async () => {
+        setIsMessageDetailOpen(true);
+      });
+      setIsMessageDetailOpen(false);
+      await show("사내쪽지를 ToDo로 등록합니다", ".priority-panel:first-child .source-action", 3000, async () => {
+        const rows = await fetchMessages();
+        const source = rows.find((item) => !item.linked_todo_id);
+        if (source) {
+          const created = await createTodoFromMessage(source.id);
+          messageTodoId = created.id;
+          await refreshDashboard();
+        }
+      });
+      await show("등록된 사내쪽지 ToDo를 삭제합니다", ".kanban-card button[title='ToDo 삭제']", 2800, async () => {
+        if (messageTodoId) await deleteTodo(messageTodoId);
+        await refreshDashboard();
+      });
+
+      await show("사후관리 고객 목록과 상세 내용을 확인합니다", ".customer-detail-modal", 3400, async () => {
+        setIsCustomerDetailOpen(true);
+      });
+      setIsCustomerDetailOpen(false);
+      await show("사후관리 고객을 ToDo로 등록합니다", ".priority-panel:nth-child(2) .source-action", 3000, async () => {
+        const rows = await fetchCustomers();
+        const source = rows.find((item) => !item.linked_todo_id);
+        if (source) {
+          const created = await createTodoFromCustomer(source.id);
+          customerTodoId = created.id;
+          await refreshDashboard();
+        }
+      });
+      await show("등록된 고객 ToDo를 삭제합니다", ".kanban-card button[title='ToDo 삭제']", 2800, async () => {
+        if (customerTodoId) await deleteTodo(customerTodoId);
+        await refreshDashboard();
+      });
+      await show("AI추천으로 관리 우선순위와 근거를 확인합니다", ".customer-priority-reason-modal", 4000, async () => {
+        const response = await recommendCustomerPriorities(selectedModel);
+        const result = response.result || { customers: [], reasons: [], summary: response.reply };
+        setCustomers(result.customers || []);
+        setCustomerPriorityResult(result);
+        setIsCustomerPriorityOpen(true);
+      });
+      setIsCustomerPriorityOpen(false);
+
+      await show("채팅 질문 · ‘너는 누구니?’", ".chat-form input", 3200, async () => {
+        const text = "너는 누구니?";
+        setChatInput(text);
+        setChatMessages((current) => [...current, { role: "user", text }]);
+        const response = await sendAssistantCommand(text, selectedModel);
+        setChatMessages((current) => [...current, { role: "assistant", text: response.reply }]);
+      });
+      await show("채팅에서 자연어 ToDo도 바로 등록합니다", ".chat-form input", 3400, async () => {
+        const text = "내일 오전 10시에 영업회의 준비 ToDo 등록해줘";
+        setChatInput(text);
+        setChatMessages((current) => [...current, { role: "user", text }]);
+        const response = await sendAssistantCommand(text, selectedModel);
+        setChatMessages((current) => [...current, { role: "assistant", text: response.reply }]);
+        await refreshDashboard();
+      });
+
+      await show("메뉴 숨김 → 메뉴 펼침", ".menu-toggle", 3000, async () => {
+        setIsMenuCollapsed(true);
+        await wait(1100);
+        setIsMenuCollapsed(false);
+      });
+      await show("채팅 숨김 → 채팅 펼침", ".section-actions button:last-child", 3000, async () => {
+        setIsChatVisible(false);
+        await wait(1100);
+        setIsChatVisible(true);
+      });
+      await show("캘린더 클릭 → 일정 확인 → 닫기", ".calendar-modal", 3200, async () => {
+        setIsCalendarOpen(true);
+      });
+      setIsCalendarOpen(false);
+      await show("사내쪽지 클릭 → 상세 확인 → 닫기", ".message-detail-modal", 3000, async () => {
+        setIsMessageDetailOpen(true);
+      });
+      setIsMessageDetailOpen(false);
+      await show("고객관리 클릭 → 상세 확인 → 닫기", ".customer-detail-modal", 3000, async () => {
+        setIsCustomerDetailOpen(true);
+      });
+      setIsCustomerDetailOpen(false);
+
+      await show("설정을 열어 Agent API 정보를 확인합니다", ".agent-api-modal", 3000, async () => {
+        const response = await fetchAgentApis();
+        setAgentApiItems(response.agents || []);
+        setIsAgentApiOpen(true);
+      });
+      await show("설정 창을 드래그해 원하는 위치로 이동합니다", ".agent-api-modal", 3000, async () => {
+        const modal = document.querySelector(".agent-api-modal");
+        if (modal) {
+          modal.style.transition = "transform 900ms ease";
+          modal.style.transform = "translate(70px, 32px)";
+        }
+      });
+      await show("설정 창을 닫습니다", ".agent-api-modal .text-button", 2400, async () => {
+        const modal = document.querySelector(".agent-api-modal");
+        if (modal) modal.style.transform = "translate(0, 0)";
+        await wait(500);
+        setIsAgentApiOpen(false);
+      });
+
+      setTutorialCursor((current) => ({ ...current, visible: false }));
+      await show("업무를 더 빠르고 스마트하게 · KB Comrade", null, 4200);
+      window.__bongTutorialFinished = true;
+    }
+
+    runTutorial().catch((error) => {
+      setTutorialCaption(`튜토리얼 진행 오류: ${error.message}`);
+      window.__bongTutorialFinished = true;
+    });
+    return undefined;
+  }, []);
+
   return (
     <div className="app-shell">
+      {tutorialCaption && (
+        <div className="tutorial-caption" role="status">
+          {tutorialCaption}
+        </div>
+      )}
+      <div
+        className={`tutorial-cursor ${tutorialCursor.visible ? "visible" : ""}`}
+        style={{ left: tutorialCursor.x, top: tutorialCursor.y }}
+        aria-hidden="true"
+      />
       <header className="topbar">
         <div className="brand-group">
           <img className="kb-logo" src={kbLogo} alt="KB국민은행" />
@@ -712,6 +956,17 @@ export default function App() {
               icon={<UserRound size={18} />}
               items={customers}
               emptyText="오늘 관리할 고객이 없습니다."
+              action={(
+                <button
+                  className="ai-recommend-button"
+                  type="button"
+                  onClick={handleCustomerPriorityRecommendation}
+                  disabled={!customers.length || customerPriorityLoading}
+                >
+                  {customerPriorityLoading ? <Loader2 className="spin" size={15} /> : <Sparkles size={15} />}
+                  {customerPriorityLoading ? "분석중" : "AI추천"}
+                </button>
+              )}
               renderItem={(item) => (
                 <SourceItem
                   key={item.id}
@@ -825,6 +1080,12 @@ export default function App() {
           setDraft={setCustomerDraft}
           onClose={() => setIsCustomerCreateOpen(false)}
           onSave={saveCustomer}
+        />
+      )}
+      {isCustomerPriorityOpen && customerPriorityResult && (
+        <CustomerPriorityReasonModal
+          result={customerPriorityResult}
+          onClose={() => setIsCustomerPriorityOpen(false)}
         />
       )}
       {isModalOpen && (
@@ -1377,6 +1638,47 @@ function TodoCard({ todo, onClick, onDelete, onPriorityClick }) {
  * @param {(item: object) => React.ReactNode} props.renderItem - 항목 렌더링 함수.
  * @param {React.ReactNode | null} [props.action] - 제목 우측에 표시할 선택 액션.
  */
+/** AI 추천의 고객별 우선순위와 선정 근거를 높은 순서로 표시한다. */
+function CustomerPriorityReasonModal({ result, onClose }) {
+  const reasons = result.reasons || [];
+
+  return (
+    <div className="modal-backdrop">
+      <section className="modal customer-priority-reason-modal" aria-label="우선순위 선정 사유">
+        <div className="modal-title">
+          <div className="modal-title-copy">
+            <h2>우선순위 선정 사유</h2>
+            <span>높은 우선순위부터 고객 목록에 반영했습니다.</span>
+          </div>
+          <button className="text-button" type="button" onClick={onClose}>닫기</button>
+        </div>
+        <div className="priority-reason-summary">
+          <Sparkles size={18} />
+          <p>{result.summary}</p>
+        </div>
+        <div className="priority-reason-list">
+          {reasons.map((item, index) => (
+            <article className="priority-reason-item" key={item.customer_id}>
+              <div className="priority-reason-rank">{index + 1}</div>
+              <div>
+                <div className="priority-reason-heading">
+                  <strong>{item.name} 고객</strong>
+                  <span className={`priority-pill ${item.priority}`}>{PRIORITY_LABELS[item.priority]}</span>
+                </div>
+                <p>{item.reason}</p>
+              </div>
+            </article>
+          ))}
+          {!reasons.length && <div className="empty-state">표시할 선정 사유가 없습니다.</div>}
+        </div>
+        {result.used_fallback && (
+          <p className="priority-reason-note">LLM 응답을 구조화할 수 없어 동일한 평가 기준으로 안전하게 보정했습니다.</p>
+        )}
+      </section>
+    </div>
+  );
+}
+
 function PriorityPanel({ title, icon, items, emptyText, renderItem, action = null }) {
   return (
     <section className="priority-panel">

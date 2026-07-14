@@ -5,7 +5,7 @@
     "reason": "정기예금 만기 임박",
     "recommended_action": "만기 안내 전화",
     "scheduled_date": "2026-07-06",
-    "priority": "medium",
+    "priority": "high",
     "detail": "만기 후 재예치 또는 대체 상품 상담 필요",
     "linked_todo_id": null
   },
@@ -25,7 +25,7 @@
     "reason": "대출 사후관리 확인",
     "recommended_action": "서류 확인",
     "scheduled_date": "2026-07-07",
-    "priority": "low",
+    "priority": "medium",
     "detail": "소득 증빙 서류 추가 수취 필요",
     "linked_todo_id": null
   },
@@ -35,7 +35,7 @@
     "reason": "사후관리 필요",
     "recommended_action": "상담 및 후속 확인",
     "scheduled_date": "오늘",
-    "priority": "medium",
+    "priority": "low",
     "detail": "사후관리고객 요약해줘.",
     "linked_todo_id": null
   }

@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import date, timedelta
 
 from ..llm_provider import LLMProvider
-from ..models import AftercareCustomer, AftercareCustomerCreate, AssistantCommandResponse
+from ..models import AftercareCustomer, AftercareCustomerCreate, AssistantCommandResponse, LLMModel
 from ..repository import JsonRepository
 from .shared import AgentContext, compact_title, contains_any
 
@@ -26,12 +27,15 @@ class AftercareCustomerManagementAgent:
         "medium": ["medium", "보통", "중간"],
         "low": ["low", "낮음", "낮은", "서류"],
     }
+    PRIORITY_WORDS = ["우선순위", "우선 순위", "중요도", "순위", "priority"]
+    PRIORITY_ACTION_WORDS = ["설정", "지정", "추천", "분류", "정해", "매겨", "재정렬", "재조정", "조정", "변경"]
 
     def __init__(self, repository: JsonRepository, llm_provider: LLMProvider) -> None:
         """사후관리 고객 저장소와 데이터 질의응답용 LLM provider를 보관한다."""
 
         self.repository = repository
         self.llm_provider = llm_provider
+        self.priority_agent = AftercareCustomerPriorityRecommendationAgent(repository, llm_provider)
 
     def can_handle(self, context: AgentContext) -> bool:
         """semantic router 실패 시 사후관리 도메인의 최소 fallback을 제공한다."""
@@ -42,6 +46,8 @@ class AftercareCustomerManagementAgent:
         """명확한 변경 요청만 실행하고 나머지는 주입된 데이터로 답변한다."""
 
         message = context.message
+        if self.priority_agent.can_handle(context):
+            return self.priority_agent.handle(context)
         if contains_any(message, self.DELETE_WORDS):
             return self._delete_customer(message)
         if contains_any(message, self.CREATE_WORDS):
@@ -267,3 +273,218 @@ class AftercareCustomerManagementAgent:
         if "오늘" in message:
             return "오늘"
         return ""
+
+
+class AftercareCustomerPriorityRecommendationAgent:
+    """LLM으로 사후관리 고객의 우선순위와 선정 사유를 추천하는 sub-agent."""
+
+    PRIORITY_VALUES = {"high", "medium", "low"}
+    PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
+
+    def __init__(self, repository: JsonRepository, llm_provider: LLMProvider) -> None:
+        """추천 대상 저장소와 선택 모델을 호출할 LLM provider를 보관한다."""
+
+        self.repository = repository
+        self.llm_provider = llm_provider
+
+    def can_handle(self, context: AgentContext) -> bool:
+        """사후고객 우선순위 추천 요청인지 확인한다."""
+
+        return contains_any(context.message, AftercareCustomerManagementAgent.PRIORITY_WORDS) and contains_any(
+            context.message, AftercareCustomerManagementAgent.PRIORITY_ACTION_WORDS
+        )
+
+    def handle(self, context: AgentContext) -> AssistantCommandResponse:
+        """명시 기준 또는 LLM으로 전체 고객 순위와 사유를 저장·반환한다."""
+
+        customers = self.repository.list_customers()
+        if not customers:
+            return AssistantCommandResponse(
+                intent="set_customer_priorities",
+                reply="우선순위를 추천할 사후관리 고객이 없습니다.",
+                result={"customers": [], "reasons": [], "summary": "추천 대상 고객이 없습니다."},
+            )
+
+        criterion = self._explicit_date_criterion(context.message)
+        used_fallback = False
+        if criterion:
+            recommendations, summary = self._recommend_by_date(customers, criterion)
+            method = "직접 지시"
+        else:
+            recommendations, summary = self._recommend_with_llm(customers, context.model)
+            method = "LLM 추천"
+            if not recommendations:
+                recommendations, summary = self._recommend_with_rules(customers)
+                used_fallback = True
+
+        updated_customers = self.repository.update_customer_priority_recommendations(recommendations)
+        customer_by_id = {customer.id: customer for customer in updated_customers}
+        reasons = [
+            {
+                "customer_id": customer_id,
+                "name": customer_by_id[customer_id].name,
+                "priority": item["priority"],
+                "rank": item["rank"],
+                "reason": item["reason"],
+            }
+            for customer_id, item in recommendations.items()
+            if customer_id in customer_by_id
+        ]
+        reasons.sort(key=lambda item: item["rank"])
+        detail = "\n".join(
+            f"{item['rank']}. [{item['priority']}] {item['name']} 고객 - {item['reason']}" for item in reasons
+        )
+        return AssistantCommandResponse(
+            intent="set_customer_priorities",
+            reply=f"사후관리 고객 {len(reasons)}명의 우선순위를 {method}로 재조정했습니다.\n조정 기준: {summary}\n{detail}",
+            result={
+                "customers": [customer.model_dump(mode="json") for customer in updated_customers],
+                "reasons": reasons,
+                "summary": summary,
+                "method": method,
+                "used_fallback": used_fallback,
+            },
+        )
+
+    def _recommend_with_llm(
+        self, customers: list[AftercareCustomer], model: LLMModel | None
+    ) -> tuple[dict[str, dict[str, str | int]], str]:
+        """LLM의 구조화된 추천 응답을 파싱한다."""
+
+        response = self.llm_provider.chat(self._build_prompt(customers), model)
+        return self._parse_recommendations(response, {customer.id for customer in customers})
+
+    def _explicit_date_criterion(self, command: str) -> str | None:
+        """사용자가 명시한 날짜 정렬 방향을 찾는다."""
+
+        if contains_any(command, ["최근", "최신", "늦은 예정일", "새로운 날짜", "최근날짜"]):
+            return "newest"
+        if contains_any(command, ["오래된", "과거", "빠른 예정일", "오래된 날짜", "예정일이 빠른"]):
+            return "oldest"
+        return None
+
+    def _recommend_by_date(
+        self, customers: list[AftercareCustomer], criterion: str
+    ) -> tuple[dict[str, dict], str]:
+        reverse = criterion == "newest"
+        ordered = sorted(customers, key=lambda item: (self._date_sort_key(item.scheduled_date), item.id), reverse=reverse)
+        label = "최근 관리예정일 순" if reverse else "빠른 관리예정일 순"
+        return self._ranked_items(
+            ordered,
+            lambda item: f"사용자가 지정한 {label} 기준(예정일 {item.scheduled_date})을 적용했습니다.",
+        ), label
+
+    def _date_sort_key(self, value: str) -> int:
+        """ISO 날짜와 오늘/내일 표현을 같은 정렬 key로 변환한다."""
+
+        if value == "오늘":
+            return date.today().toordinal()
+        if value == "내일":
+            return (date.today() + timedelta(days=1)).toordinal()
+        try:
+            return date.fromisoformat(value[:10]).toordinal()
+        except ValueError:
+            return -1
+
+    def _build_prompt(self, customers: list[AftercareCustomer]) -> str:
+        """고객 업무 데이터와 평가 기준을 담은 JSON 전용 prompt를 만든다."""
+
+        rows = [
+            {
+                "id": customer.id,
+                "name": customer.name,
+                "reason": customer.reason,
+                "recommended_action": customer.recommended_action,
+                "scheduled_date": customer.scheduled_date,
+                "detail": customer.detail,
+                "todo_registered": bool(customer.linked_todo_id),
+                "current_priority": customer.priority,
+            }
+            for customer in customers
+        ]
+        return (
+            "은행 직원의 사후관리 고객 처리 우선순위를 high, medium, low 중 하나로 추천하세요. "
+            "기한 임박·경과, 금융 리스크, 고객 영향, 민원 가능성, 후속 조치 긴급성을 근거로 판단하세요. "
+            "모든 고객에 1부터 고객 수까지 서로 다른 rank를 부여하세요. "
+            "각 고객마다 제공된 데이터에서 확인 가능한 구체적인 한국어 사유를 한 문장으로 작성하세요. "
+            "반드시 설명이나 markdown 없이 다음 JSON 형식만 반환하세요: "
+            '{"summary":"전체 선정 기준 요약",'
+            '"recommendations":[{"id":"customer_id","priority":"high|medium|low","rank":1,"reason":"선정 사유"}]}. '
+            f"사후관리 고객 목록: {json.dumps(rows, ensure_ascii=False)}"
+        )
+
+    def _parse_recommendations(
+        self, response: str, allowed_ids: set[str]
+    ) -> tuple[dict[str, dict[str, str | int]], str]:
+        """LLM JSON에서 유효한 전체 고객 추천과 요약을 추출한다."""
+
+        match = re.search(r"\{.*\}", response, flags=re.DOTALL)
+        if not match:
+            return {}, ""
+        try:
+            parsed = json.loads(match.group(0))
+        except json.JSONDecodeError:
+            return {}, ""
+        recommendations = {}
+        for item in parsed.get("recommendations", []):
+            customer_id = item.get("id")
+            priority = item.get("priority")
+            rank = item.get("rank")
+            reason = str(item.get("reason", "")).strip()
+            if customer_id in allowed_ids and priority in self.PRIORITY_VALUES and isinstance(rank, int) and reason:
+                recommendations[customer_id] = {"priority": priority, "rank": rank, "reason": reason}
+        ranks = {item["rank"] for item in recommendations.values()}
+        if set(recommendations) != allowed_ids or ranks != set(range(1, len(allowed_ids) + 1)):
+            return {}, ""
+        return recommendations, str(parsed.get("summary", "AI가 업무 긴급도와 고객 영향을 종합해 선정했습니다.")).strip()
+
+    def _recommend_with_rules(
+        self, customers: list[AftercareCustomer]
+    ) -> tuple[dict[str, dict[str, str | int]], str]:
+        """LLM을 사용할 수 없을 때 동일 데이터로 결정적 추천과 설명을 만든다."""
+
+        today = date.today()
+        risk_words = ["긴급", "민원", "연체", "만기", "VIP", "변동성", "리스크", "고액"]
+        action_words = ["전화", "상담", "확인", "예약"]
+        scored = []
+        for customer in customers:
+            text = f"{customer.reason} {customer.recommended_action} {customer.detail}"
+            score = 0
+            evidence = []
+            matched_risk = next((word for word in risk_words if word in text), None)
+            if matched_risk:
+                score += 3
+                evidence.append(f"'{matched_risk}' 관련 고객 영향 또는 금융 리스크가 있습니다")
+            try:
+                scheduled_date = date.fromisoformat(customer.scheduled_date[:10])
+            except ValueError:
+                scheduled_date = None
+            if scheduled_date and scheduled_date <= today:
+                score += 2
+                evidence.append(f"관리 예정일({customer.scheduled_date})이 도래했거나 경과했습니다")
+            if not customer.linked_todo_id:
+                score += 1
+                evidence.append("아직 ToDo로 등록되지 않았습니다")
+            matched_action = next((word for word in action_words if word in customer.recommended_action), None)
+            if matched_action:
+                score += 1
+                evidence.append(f"'{customer.recommended_action}' 후속 조치가 필요합니다")
+            reason = "; ".join(evidence[:3]) or "현재 데이터에서 즉시 처리해야 할 긴급 근거가 확인되지 않았습니다"
+            scored.append((score, customer.scheduled_date, customer, reason + "."))
+        scored.sort(key=lambda item: (item[0], item[1]), reverse=True)
+        ordered = [item[2] for item in scored]
+        reasons = {item[2].id: item[3] for item in scored}
+        return self._ranked_items(ordered, lambda item: reasons[item.id]), "관리 예정일, 금융·고객 리스크, 후속 조치 필요성과 ToDo 등록 여부를 종합해 정렬했습니다."
+
+    def _ranked_items(self, ordered: list[AftercareCustomer], reason_for) -> dict[str, dict]:
+        """정렬된 고객에 1~N 순위와 상·중·하 등급을 부여한다."""
+
+        count = len(ordered)
+        return {
+            item.id: {
+                "priority": "high" if rank * 3 <= count + 2 else "medium" if rank * 3 <= count * 2 + 2 else "low",
+                "rank": rank,
+                "reason": reason_for(item),
+            }
+            for rank, item in enumerate(ordered, start=1)
+        }

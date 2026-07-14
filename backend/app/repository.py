@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -220,11 +220,17 @@ class JsonRepository:
             return True, f"{record['summary']} 시점으로 이동했습니다.", self.list_todos()
 
     def list_messages(self) -> list[InternalMessage]:
-        """mock 사내쪽지를 우선순위 순서로 반환한다."""
+        """mock 사내쪽지를 저장된 상세 순위와 우선순위 순서로 반환한다."""
         # mock 사내쪽지를 읽어 우선순위 순서로 반환한다.
 
         messages = [InternalMessage(**item) for item in self._read_json("messages.json")]
-        return sorted(messages, key=lambda item: self._priority_order(item.priority))
+        return sorted(
+            messages,
+            key=lambda item: (
+                item.priority_rank if item.priority_rank is not None else 10_000 + self._priority_order(item.priority),
+                self._priority_order(item.priority),
+            ),
+        )
 
     def create_message(self, payload: InternalMessageCreate) -> InternalMessage:
         """화면에서 입력한 사내쪽지를 JSON 저장소에 추가한다.
@@ -282,6 +288,8 @@ class JsonRepository:
         updates = payload.model_dump(exclude_none=True, exclude_unset=True)
         if not updates:
             return next((message for message in self.list_messages() if message.id == message_id), None)
+        if "priority" in updates and "priority_rank" not in updates:
+            updates.update({"priority_rank": None, "priority_reason": ""})
         with self._lock:
             rows = self._read_json("messages.json")
             for row in rows:
@@ -320,12 +328,25 @@ class JsonRepository:
                 self._write_json("messages.json", rows)
         return self.list_messages()
 
+    def update_message_priority_recommendations(self, recommendations: dict[str, dict]) -> list[InternalMessage]:
+        """쪽지별 등급, 전체 순위, 조정 사유를 한 번에 저장한다."""
+
+        return self._update_source_priority_recommendations(
+            "messages.json", recommendations, "사내쪽지 우선순위 재조정 전"
+        )
+
     def list_customers(self) -> list[AftercareCustomer]:
-        """mock 사후관리 고객을 우선순위 순서로 반환한다."""
+        """mock 사후관리 고객을 저장된 상세 순위와 우선순위 순서로 반환한다."""
         # mock 사후관리 고객을 읽어 우선순위 순서로 반환한다.
 
         customers = [AftercareCustomer(**item) for item in self._read_json("customers.json")]
-        return sorted(customers, key=lambda item: self._priority_order(item.priority))
+        return sorted(
+            customers,
+            key=lambda item: (
+                item.priority_rank if item.priority_rank is not None else 10_000 + self._priority_order(item.priority),
+                self._priority_order(item.priority),
+            ),
+        )
 
     def create_customer(self, payload: AftercareCustomerCreate) -> AftercareCustomer:
         """화면에서 입력한 사후관리 고객을 JSON 저장소에 추가한다.
@@ -383,6 +404,8 @@ class JsonRepository:
         updates = payload.model_dump(exclude_none=True, exclude_unset=True)
         if not updates:
             return next((customer for customer in self.list_customers() if customer.id == customer_id), None)
+        if "priority" in updates and "priority_rank" not in updates:
+            updates.update({"priority_rank": None, "priority_reason": ""})
         with self._lock:
             rows = self._read_json("customers.json")
             for row in rows:
@@ -391,6 +414,53 @@ class JsonRepository:
                     self._write_json("customers.json", rows)
                     return AftercareCustomer(**row)
         return None
+
+    def update_customer_priorities(self, priorities: dict[str, str]) -> list[AftercareCustomer]:
+        """AI 추천으로 받은 여러 고객의 우선순위를 하나의 히스토리 단위로 저장한다.
+
+        Args:
+            priorities: 고객 id를 key, high/medium/low를 value로 갖는 mapping.
+
+        Returns:
+            추천 우선순위가 반영되어 높은 순서로 정렬된 전체 고객 목록.
+        """
+
+        allowed = {"high", "medium", "low"}
+        clean_priorities = {customer_id: priority for customer_id, priority in priorities.items() if priority in allowed}
+        if not clean_priorities:
+            return self.list_customers()
+        with self._lock:
+            rows = self._read_json("customers.json")
+            changed = False
+            for row in rows:
+                next_priority = clean_priorities.get(row["id"])
+                if next_priority and row.get("priority") != next_priority:
+                    if not changed:
+                        self._save_history("update_customer_priorities", "사후관리 고객 AI 우선순위 추천 전")
+                    row["priority"] = next_priority
+                    changed = True
+            if changed:
+                self._write_json("customers.json", rows)
+                linked_priorities = {
+                    row["linked_todo_id"]: row["priority"]
+                    for row in rows
+                    if row.get("linked_todo_id") and row["id"] in clean_priorities
+                }
+                if linked_priorities:
+                    todos = self._read_json("todos.json")
+                    for todo in todos:
+                        if todo["id"] in linked_priorities:
+                            todo["priority"] = linked_priorities[todo["id"]]
+                            todo["updated_at"] = datetime.now(timezone.utc).isoformat()
+                    self._write_json("todos.json", todos)
+        return self.list_customers()
+
+    def update_customer_priority_recommendations(self, recommendations: dict[str, dict]) -> list[AftercareCustomer]:
+        """고객별 등급, 전체 순위, 조정 사유를 한 번에 저장한다."""
+
+        return self._update_source_priority_recommendations(
+            "customers.json", recommendations, "사후관리 고객 우선순위 재조정 전"
+        )
 
     def create_todo_from_message(self, message_id: str) -> tuple[Todo | None, str]:
         """사내쪽지를 ToDo로 전환하되 중복 연결을 방지한다.
@@ -464,6 +534,60 @@ class JsonRepository:
             customer["linked_todo_id"] = todo.id
             self._write_json("customers.json", customers)
             return todo, "사후관리 고객 기반 ToDo가 생성되었습니다."
+
+    def _update_source_priority_recommendations(
+        self, filename: str, recommendations: dict[str, dict], history_summary: str
+    ) -> list[InternalMessage] | list[AftercareCustomer]:
+        """원천 레코드의 우선순위 등급·순번·사유를 원자적으로 갱신한다."""
+
+        allowed = {"high", "medium", "low"}
+        clean = {
+            item_id: {
+                "priority": item.get("priority"),
+                "rank": item.get("rank"),
+                "reason": str(item.get("reason", "")).strip(),
+            }
+            for item_id, item in recommendations.items()
+            if item.get("priority") in allowed
+            and isinstance(item.get("rank"), int)
+            and item["rank"] >= 1
+            and str(item.get("reason", "")).strip()
+        }
+        if not clean:
+            return self.list_messages() if filename == "messages.json" else self.list_customers()
+
+        with self._lock:
+            rows = self._read_json(filename)
+            changed = False
+            for row in rows:
+                item = clean.get(row["id"])
+                if not item:
+                    continue
+                updates = {
+                    "priority": item["priority"],
+                    "priority_rank": item["rank"],
+                    "priority_reason": item["reason"],
+                }
+                if any(row.get(key) != value for key, value in updates.items()):
+                    if not changed:
+                        self._save_history("update_source_priorities", history_summary)
+                    row.update(updates)
+                    changed = True
+            if changed:
+                self._write_json(filename, rows)
+                linked_priorities = {
+                    row["linked_todo_id"]: row["priority"]
+                    for row in rows
+                    if row.get("linked_todo_id") and row["id"] in clean
+                }
+                if linked_priorities:
+                    todos = self._read_json("todos.json")
+                    for todo in todos:
+                        if todo["id"] in linked_priorities:
+                            todo["priority"] = linked_priorities[todo["id"]]
+                            todo["updated_at"] = datetime.now(timezone.utc).isoformat()
+                    self._write_json("todos.json", todos)
+        return self.list_messages() if filename == "messages.json" else self.list_customers()
 
     def _read_json(self, filename: str) -> list[dict]:
         """설정된 데이터 디렉터리에서 JSON 배열 파일을 읽는다."""
