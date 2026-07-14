@@ -117,7 +117,12 @@ class RuleBasedAssistantAgent:
         self.graph = self._build_graph()
 
     def handle(self, message: str, model: LLMModel | None = None) -> AssistantCommandResponse:
-        """사용자 메시지를 graph에 전달하고 최종 agent 응답을 반환한다."""
+        """사용자 메시지를 graph에 전달하고 최종 agent 응답을 반환한다.
+
+        Example:
+            ``handle("사내쪽지 우선순위를 재조정해 줘", "gemini-2.5-flash")``는
+            message node로 라우팅되어 쪽지 순위와 조정 사유를 갱신한다.
+        """
 
         state: OrchestratorState = {
             "message": message.strip(),

@@ -36,7 +36,15 @@ export async function fetchCustomers() {
   return parseResponse(await fetch(`${API_BASE_URL}/api/customers/aftercare`));
 }
 
-/** 선택한 LLM으로 사후관리 고객 우선순위와 선정 사유를 추천받는다. */
+/**
+ * 선택한 LLM으로 사후관리 고객 우선순위와 선정 사유를 추천받는다.
+ *
+ * @param {string | null} model - 모델 선택기에서 고른 모델 id.
+ * @returns {Promise<object>} customers, reasons, summary가 포함된 assistant 응답.
+ * @example
+ * const response = await recommendCustomerPriorities("gemini-2.5-flash");
+ * console.log(response.result.reasons[0].reason);
+ */
 export async function recommendCustomerPriorities(model) {
   return parseResponse(
     await fetch(`${API_BASE_URL}/api/customers/aftercare/ai-recommend`, {
@@ -62,6 +70,9 @@ export async function fetchAgentApis() {
  *
  * @param {string} agentId - 호출할 agent id.
  * @param {{message: string, model?: string | null}} payload - agent 직접 호출 payload.
+ * @returns {Promise<object>} intent, reply, result를 담은 agent 응답.
+ * @example
+ * await invokeAgent("message-priority", { message: "쪽지 우선순위를 재조정해 줘" });
  */
 export async function invokeAgent(agentId, payload) {
   return parseResponse(
@@ -101,6 +112,9 @@ export async function restoreHistory(id) {
  * 상세 모달 폼에서 입력한 payload로 수동 ToDo를 생성한다.
  *
  * @param {object} payload - ToDo 생성 payload.
+ * @returns {Promise<object>} id와 생성 시각이 채워진 ToDo.
+ * @example
+ * await createTodo({ title: "보고서 검토", status: "todo", priority: "high" });
  */
 export async function createTodo(payload) {
   return parseResponse(
@@ -240,6 +254,9 @@ export async function deleteCustomer(id) {
  *
  * @param {string} message - 사용자가 입력한 자연어 메시지.
  * @param {string | null} model - 선택된 LLM 모델 id.
+ * @returns {Promise<object>} orchestrator가 선택한 intent와 한국어 답변.
+ * @example
+ * await sendAssistantCommand("사후관리 고객을 최근날짜 순으로 지정해 줘", "gemini-2.5-flash");
  */
 export async function sendAssistantCommand(message, model) {
   return parseResponse(

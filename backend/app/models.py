@@ -54,7 +54,12 @@ class Todo(TodoBase):
 
 
 class InternalMessage(BaseModel):
-    """ToDo로 전환할 수 있는 mock 사내쪽지 레코드."""
+    """ToDo로 전환할 수 있는 사내쪽지 레코드.
+
+    ``priority``는 high/medium/low 등급이고 ``priority_rank``는 재조정된
+    전체 목록의 정확한 1~N 순서다. 예를 들어 high 등급 항목이 여러 개여도
+    ``priority_rank=1``인 쪽지가 먼저 표시된다.
+    """
 
     id: str
     title: str
@@ -87,7 +92,13 @@ class InternalMessageUpdate(BaseModel):
 
 
 class AftercareCustomer(BaseModel):
-    """ToDo로 전환할 수 있는 mock 사후관리 고객 레코드."""
+    """ToDo로 전환할 수 있는 사후관리 고객 레코드.
+
+    Example:
+        최근 예정일 순 재조정 결과는 ``priority="high"``,
+        ``priority_rank=1``, ``priority_reason="최근 관리예정일 기준..."``처럼
+        등급·전체 순위·근거를 함께 저장한다.
+    """
 
     id: str
     name: str

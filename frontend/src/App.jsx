@@ -58,6 +58,8 @@ import { createLlmModelChangeHandler, DEFAULT_LLM_MODEL, FALLBACK_LLM_MODELS, no
  * @property {string} id
  * @property {"high" | "medium" | "low"} priority
  * @property {string | null} [linked_todo_id]
+ * @property {number | null} [priority_rank] - 자연어/AI 재조정으로 저장된 전체 1~N 순위.
+ * @property {string} [priority_reason] - 현재 순위로 조정된 데이터 기반 사유.
  */
 
 /**
@@ -152,7 +154,12 @@ function emptyCustomerDraft() {
   };
 }
 
-/** 날짜를 캘린더 집계 key로 통일한다. */
+/**
+ * 날짜를 캘린더 집계 key로 통일한다.
+ *
+ * @example
+ * toDateKey(new Date(2026, 6, 14)); // "2026-07-14"
+ */
 function toDateKey(value) {
   if (!value) return "";
   if (value instanceof Date) {
@@ -183,6 +190,9 @@ function buildCalendarDays(monthDate) {
  * 서버에서 가져온 ToDo/쪽지/고객/히스토리 상태를 보관하고, 드래그 앤 드롭,
  * 모달 저장, 자연어 명령, undo/redo 같은 사용자 이벤트를 각각의 handler로
  * 연결한다.
+ *
+ * @example 사용자가 "사후관리 고객을 최근날짜 순으로 지정해 줘"라고 보내면
+ * submitChat이 응답을 채팅에 추가하고 재정렬된 고객 목록과 히스토리를 다시 읽는다.
  */
 export default function App() {
   const [todos, setTodos] = useState([]);
@@ -568,7 +578,10 @@ export default function App() {
     }
   }
 
-  /** 전체 사후관리 고객을 LLM으로 평가해 우선순위를 저장하고 선정 사유를 표시한다. */
+  /**
+   * 전체 사후관리 고객을 LLM으로 평가해 우선순위를 저장하고 선정 사유를 표시한다.
+   * 예: 고객 패널의 AI추천 버튼을 누르면 결과의 reasons 배열을 근거 모달에 표시한다.
+   */
   async function handleCustomerPriorityRecommendation() {
     if (!customers.length || customerPriorityLoading) return;
     setCustomerPriorityLoading(true);
@@ -617,7 +630,11 @@ export default function App() {
     }
   }
 
-  /** 채팅 입력을 assistant에 보내고 명령 결과를 현재 UI 상태에 병합한다. */
+  /**
+   * 채팅 입력을 assistant에 보내고 명령 결과를 현재 UI 상태에 병합한다.
+   * 예: set_message_priorities 또는 set_customer_priorities 응답이면 전체 대시보드를
+   * 다시 읽어 저장된 priority_rank 순서를 즉시 화면에 반영한다.
+   */
   async function submitChat(event) {
     event.preventDefault();
     const message = chatInput.trim();

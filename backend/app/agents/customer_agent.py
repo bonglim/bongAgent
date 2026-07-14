@@ -13,7 +13,12 @@ from .shared import AgentContext, compact_title, contains_any
 
 
 class AftercareCustomerManagementAgent:
-    """사후관리 고객 변경과 현재 대시보드 데이터 기반 질의응답을 처리한다."""
+    """사후관리 고객 변경과 현재 대시보드 데이터 기반 질의응답을 처리한다.
+
+    Example:
+        ``"김민수 고객을 사후관리에 등록해 줘"``는 등록을 수행하고,
+        ``"사후관리 고객 우선순위를 재조정해 줘"``는 추천 sub-agent에 위임한다.
+    """
 
     DOMAIN_WORDS = ["사후고객", "사후관리", "고객관리", "고객"]
     FALLBACK_DOMAIN_WORDS = ["사후고객", "사후관리", "고객관리"]
@@ -276,7 +281,12 @@ class AftercareCustomerManagementAgent:
 
 
 class AftercareCustomerPriorityRecommendationAgent:
-    """LLM으로 사후관리 고객의 우선순위와 선정 사유를 추천하는 sub-agent."""
+    """직접 기준 또는 LLM으로 고객 우선순위와 선정 사유를 저장하는 sub-agent.
+
+    기준이 명시된 날짜 정렬은 LLM 호출 없이 결정적으로 수행한다. 기준 없는
+    재조정 요청은 LLM의 구조화 JSON을 검증해 사용하고 실패하면 동일 데이터에
+    기반한 규칙형 점수로 안전하게 보정한다.
+    """
 
     PRIORITY_VALUES = {"high", "medium", "low"}
     PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
@@ -366,6 +376,20 @@ class AftercareCustomerPriorityRecommendationAgent:
     def _recommend_by_date(
         self, customers: list[AftercareCustomer], criterion: str
     ) -> tuple[dict[str, dict], str]:
+        """관리 예정일 기준으로 고객 전체에 결정적인 1~N 순위를 부여한다.
+
+        Args:
+            customers: 재정렬할 현재 사후관리 고객 목록.
+            criterion: ``newest``이면 최근 날짜 우선, ``oldest``이면 빠른 날짜 우선.
+
+        Returns:
+            고객 id별 등급·순위·사유 mapping과 채팅에 표시할 기준 설명.
+
+        Example:
+            ``"사후관리 고객을 최근날짜 순으로 지정해 줘"``는 ``newest``로
+            해석되어 가장 최근 관리 예정일의 고객이 1순위가 된다.
+        """
+
         reverse = criterion == "newest"
         ordered = sorted(customers, key=lambda item: (self._date_sort_key(item.scheduled_date), item.id), reverse=reverse)
         label = "최근 관리예정일 순" if reverse else "빠른 관리예정일 순"
@@ -375,7 +399,12 @@ class AftercareCustomerPriorityRecommendationAgent:
         ), label
 
     def _date_sort_key(self, value: str) -> int:
-        """ISO 날짜와 오늘/내일 표현을 같은 정렬 key로 변환한다."""
+        """ISO 날짜와 오늘/내일 표현을 같은 정렬 key로 변환한다.
+
+        Example:
+            ``2026-07-14``와 ``오늘`` 모두 날짜 ordinal 정수로 변환되므로
+            문자열 형식이 섞여 있어도 시간 순서대로 비교할 수 있다.
+        """
 
         if value == "오늘":
             return date.today().toordinal()

@@ -16,7 +16,12 @@ def contains_any(message: str, keywords: list[str]) -> bool:
 
 
 def compact_title(message: str, remove_words: list[str], fallback: str) -> str:
-    """명령어 키워드를 제거해 저장용 제목을 만든다."""
+    """명령어 키워드를 제거해 저장용 제목을 만든다.
+
+    Example:
+        ``compact_title("회의 준비 추가해줘", ["추가", "해줘"], "새 업무")``는
+        ``"회의 준비"``를 반환한다.
+    """
 
     title = message
     for word in remove_words:

@@ -3,6 +3,14 @@
 이 모듈은 CORS 설정, 의존성 주입 함수, REST API 라우터를 정의한다. 실제
 데이터 접근은 ``JsonRepository``가 담당하고, 자연어 명령 처리는
 ``RuleBasedAssistantAgent``가 담당하도록 분리한다.
+
+실행 예시::
+
+    cd backend
+    .venv/bin/uvicorn app.main:app --port 8000
+
+상태 확인은 ``GET /api/health``, 채팅 명령은 ``POST /api/assistant/command``로
+호출한다.
 """
 
 from fastapi import Depends, FastAPI, HTTPException

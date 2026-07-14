@@ -18,6 +18,8 @@ export const DEFAULT_LLM_MODEL = "gemini-3.5-flash";
  *
  * @param {object | undefined} payload - ``/api/llm/models`` 응답 payload.
  * @returns {{models: Array<{id: string, label: string}>, defaultModel: string}}
+ * @example
+ * normalizeLlmModels(undefined); // 내장 fallback 모델 목록과 기본 모델 반환
  */
 export function normalizeLlmModels(payload) {
   const models = Array.isArray(payload?.models) ? payload.models.filter((model) => model?.id && model?.label) : [];
@@ -33,6 +35,8 @@ export function normalizeLlmModels(payload) {
  * @param {string | undefined} model - 사용자가 선택했거나 저장된 모델 id.
  * @param {Array<{id: string}>} models - 현재 선택 가능한 모델 목록.
  * @returns {string} 실제 select 값으로 사용할 모델 id.
+ * @example
+ * normalizeLlmModel("unknown", [{ id: "demo" }]); // "demo"
  */
 export function normalizeLlmModel(model, models = FALLBACK_LLM_MODELS) {
   const ids = new Set(models.map((item) => item.id));

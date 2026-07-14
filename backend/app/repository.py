@@ -22,6 +22,10 @@ class JsonRepository:
     ToDo, 사내쪽지, 사후관리 고객, undo/redo 히스토리를 모두 같은 데이터
     디렉터리 아래의 JSON 배열 파일로 관리한다. 쓰기 작업은 재진입 가능한 lock으로
     감싸, 한 요청 안에서 다른 저장소 메서드를 다시 호출해도 안전하게 동작한다.
+
+    Example:
+        ``JsonRepository(Path("backend/data")).list_customers()``는 저장된
+        ``priority_rank``가 있으면 1~N 순서로, 없으면 high/medium/low 순서로 반환한다.
     """
 
     HISTORY_LIMIT = 30
@@ -538,7 +542,12 @@ class JsonRepository:
     def _update_source_priority_recommendations(
         self, filename: str, recommendations: dict[str, dict], history_summary: str
     ) -> list[InternalMessage] | list[AftercareCustomer]:
-        """원천 레코드의 우선순위 등급·순번·사유를 원자적으로 갱신한다."""
+        """원천 레코드의 우선순위 등급·순번·사유를 원자적으로 갱신한다.
+
+        추천 하나는 ``{"priority": "high", "rank": 1, "reason": "..."}``
+        형태다. 첫 실제 변경 전에 스냅샷을 한 번만 저장해 전체 재정렬이 단일
+        undo 작업으로 복원되며, 연결된 ToDo의 등급도 함께 동기화된다.
+        """
 
         allowed = {"high", "medium", "low"}
         clean = {

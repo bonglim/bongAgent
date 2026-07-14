@@ -1,8 +1,11 @@
+# HTTP API와 타입 지정 환경 설정
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 pydantic-settings==2.7.1
 python-dotenv==1.0.1
 certifi==2026.6.17
+
+# Agent orchestration과 선택적 LLM 실행 추적
 langgraph>=0.2.0
 langchain>=1.0.0
 langfuse>=4.0.0

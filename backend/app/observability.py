@@ -37,7 +37,12 @@ def _create_client(
 
 
 def build_langfuse_tracing(settings: Settings) -> LangfuseTracing | None:
-    """public/secret key가 모두 설정된 경우에만 tracing을 활성화한다."""
+    """public/secret key가 모두 설정된 경우에만 tracing을 활성화한다.
+
+    Example:
+        로컬 ``.env``에 Langfuse key가 없으면 ``None``을 반환하므로 API와
+        agent는 관측성 서비스 없이도 동일하게 동작한다.
+    """
 
     if not settings.langfuse_public_key or not settings.langfuse_secret_key:
         return None

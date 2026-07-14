@@ -13,7 +13,12 @@ from .shared import AgentContext, compact_title, contains_any
 
 
 class InternalMessageManagementAgent:
-    """사내쪽지 변경과 현재 대시보드 데이터 기반 질의응답을 처리한다."""
+    """사내쪽지 변경과 현재 대시보드 데이터 기반 질의응답을 처리한다.
+
+    Example:
+        ``"사내쪽지 내용 보여 줘"``는 읽기 전용 답변을 만들고,
+        ``"쪽지 우선순위를 최근 수신일 순으로 지정해 줘"``는 재정렬을 수행한다.
+    """
 
     DOMAIN_WORDS = ["사내쪽지", "쪽지", "메시지", "message"]
     CREATE_WORDS = ["등록", "추가", "생성"]
@@ -263,7 +268,11 @@ class InternalMessageManagementAgent:
 
 
 class InternalMessagePriorityRecommendationAgent:
-    """명시적 정렬 기준 또는 LLM 추천으로 사내쪽지 우선순위를 재조정한다."""
+    """명시적 정렬 기준 또는 LLM 추천으로 사내쪽지 우선순위를 재조정한다.
+
+    결과는 high/medium/low 등급뿐 아니라 중복 없는 ``rank``와 각 항목의
+    ``reason``을 포함하며, 채팅 답변에도 같은 근거를 순서대로 보여 준다.
+    """
 
     PRIORITY_VALUES = {"high", "medium", "low"}
 
@@ -323,6 +332,13 @@ class InternalMessagePriorityRecommendationAgent:
         )
 
     def _explicit_date_criterion(self, command: str) -> str | None:
+        """쪽지 재정렬 문장에서 사용자가 지정한 날짜 방향을 추출한다.
+
+        Example:
+            ``"최근날짜 순"``은 ``newest``, ``"오래된 날짜 순"``은
+            ``oldest``를 반환하며 방향 표현이 없으면 LLM 추천을 위해 ``None``을 반환한다.
+        """
+
         if contains_any(command, ["최근", "최신", "늦게 받은", "새로운 날짜", "최근날짜"]):
             return "newest"
         if contains_any(command, ["오래된", "과거", "먼저 받은", "오래된 날짜"]):
@@ -332,6 +348,16 @@ class InternalMessagePriorityRecommendationAgent:
     def _recommend_by_date(
         self, messages: list[InternalMessage], criterion: str
     ) -> tuple[dict[str, dict], str]:
+        """수신일 기준으로 쪽지 전체에 1~N 순위와 조정 사유를 만든다.
+
+        Args:
+            messages: 재정렬할 현재 사내쪽지 목록.
+            criterion: ``newest`` 또는 ``oldest`` 날짜 방향.
+
+        Returns:
+            쪽지 id별 등급·순위·사유 mapping과 적용 기준 설명.
+        """
+
         reverse = criterion == "newest"
         ordered = sorted(messages, key=lambda item: (self._date_sort_key(item.received_at), item.id), reverse=reverse)
         label = "최근 수신일 순" if reverse else "오래된 수신일 순"
@@ -340,7 +366,12 @@ class InternalMessagePriorityRecommendationAgent:
         ), label
 
     def _date_sort_key(self, value: str) -> int:
-        """ISO 날짜와 오늘/내일 표현을 같은 정렬 key로 변환한다."""
+        """ISO 날짜와 오늘/내일 표현을 같은 정렬 key로 변환한다.
+
+        Example:
+            직접 등록된 ``오늘`` 쪽지와 mock 데이터의 ``2026-07-14``를
+            동일한 정수 축에서 비교해 최근 수신일 순으로 정렬한다.
+        """
 
         if value == "오늘":
             return date.today().toordinal()

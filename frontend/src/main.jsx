@@ -9,7 +9,8 @@ import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import "./styles.css";
 
-// Vite index.html의 root element에 전체 대시보드 애플리케이션을 연결한다.
+// 사용 예: `npm run dev`로 Vite를 시작하면 index.html의 #root에 App이 한 번 mount된다.
+// StrictMode는 개발 환경에서 effect 재실행 가능성이 있으므로 API mutation은 사용자 이벤트에서 수행한다.
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <App />

@@ -62,6 +62,10 @@ def parse_llm_models(raw_models: str) -> list[LLMModelConfig]:
 
     Returns:
         설정된 순서를 유지한 유효한 ``LLMModelConfig`` 목록.
+
+    Example:
+        ``parse_llm_models("demo|Demo|openai|DEMO_API_KEY")``는 id가
+        ``demo``인 설정 하나를 반환한다.
     """
     # 형식: model_id|label|provider|api_key_env_name
 
@@ -156,6 +160,10 @@ def public_llm_models(settings: Settings) -> dict:
 
     Returns:
         프론트엔드 모델 선택기에서 사용할 JSON 직렬화 가능한 dictionary.
+
+    Example:
+        응답은 ``{"default_model": "...", "models": [...]}`` 형태이며
+        ``key_env``와 실제 API key는 포함하지 않는다.
     """
     # key_env와 실제 key 값은 브라우저로 내려보내지 않는다.
 

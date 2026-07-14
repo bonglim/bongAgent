@@ -12,7 +12,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """FastAPI 애플리케이션에서 사용하는 타입 지정 런타임 설정."""
+    """FastAPI 애플리케이션에서 사용하는 타입 지정 런타임 설정.
+
+    Example:
+        ``Settings(llm_provider="mock").cors_origin_list()``를 사용하면 외부
+        LLM API 없이 로컬 화면과 agent 흐름을 검증할 수 있다.
+    """
 
     # 프론트엔드 개발 서버 주소를 쉼표로 여러 개 지정할 수 있다.
     backend_cors_origins: str = "http://localhost:5173"

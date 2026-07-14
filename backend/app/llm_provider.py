@@ -221,7 +221,12 @@ class OpenAIProvider(LLMProvider):
 
 
 class RoutedLLMProvider(LLMProvider):
-    """선택된 모델에 맞는 provider로 각 채팅 요청을 라우팅한다."""
+    """선택된 모델에 맞는 provider로 각 채팅 요청을 라우팅한다.
+
+    Example:
+        프론트가 ``model="gpt-4o-mini"``를 보내면 모델 레지스트리의 provider와
+        key 환경변수를 확인해 OpenAI로 전달하고, key가 없으면 mock으로 전환한다.
+    """
 
     def __init__(self, settings: Settings, langfuse: Langfuse | None = None) -> None:
         """런타임 설정을 사용해 provider 라우팅에 필요한 상태를 준비한다."""
@@ -253,7 +258,12 @@ class RoutedLLMProvider(LLMProvider):
 
 
 def build_llm_provider(settings: Settings, langfuse: Langfuse | None = None) -> LLMProvider:
-    """의존성 주입에 사용할 LLM provider를 설정값에 맞춰 생성한다."""
+    """의존성 주입에 사용할 LLM provider를 설정값에 맞춰 생성한다.
+
+    Example:
+        FastAPI 의존성에서 ``build_llm_provider(settings)``를 호출하면 요청마다
+        선택 모델을 해석하는 ``RoutedLLMProvider``가 반환된다.
+    """
     # 환경 설정과 요청 모델에 따라 실제 provider 또는 mock provider를 선택한다.
 
     return RoutedLLMProvider(settings, langfuse)

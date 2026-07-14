@@ -10,7 +10,12 @@ from .shared import AgentContext, compact_title, contains_any
 
 
 class TodoManagementAgent:
-    """자연어 ToDo 생성, 수정, 삭제 명령을 처리한다."""
+    """자연어 ToDo 생성, 수정, 삭제 명령을 처리한다.
+
+    Example:
+        ``"내일 오전 10시 영업회의 준비 추가해줘"``는 생성으로,
+        ``"영업회의 준비를 완료로 바꿔줘"``는 수정으로 처리된다.
+    """
 
     DOMAIN_WORDS = ["todo", "ToDo", "할일", "업무", "일정", "작업"]
     QUERY_WORDS = ["목록", "조회", "보여", "확인", "찾아", "검색", "내용", "상세", "뭐", "무엇", "어떤", "어때", "있어", "있나", "있니", "알려", "해야", "할까"]
